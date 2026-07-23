@@ -74,6 +74,12 @@ def main() -> None:
             st.checkbox(label, value=True, key=f"show_prot_{label}")
         selected = [label for label in labels if st.session_state[f"show_prot_{label}"]]
         show_pocket = st.checkbox("Highlight reference pocket residues", value=True)
+        label_residues = st.checkbox("Show residue labels", value=True, disabled=not show_pocket)
+        show_pdb_overlay = st.checkbox(
+            "Show real PDB structure when available", value=True,
+            help="Semi-transparent overlay of each protein's own best-matching RCSB structure "
+                 "(preferring one with a bound ligand), superposed onto the reference alongside its AlphaFold model.",
+        )
 
         if "camera_generation" not in st.session_state:
             st.session_state.camera_generation = 0
@@ -105,20 +111,56 @@ def main() -> None:
     with tabs[2]:
         by_label = {p["accession"]: p for p in proteins}
         scene_structures = []
+        pdb_caption_lines = []
+        no_pdb_labels = []
         for label in selected:
             p = by_label[label]
             if not p.get("aligned_pdb"):
                 continue  # skipped during structural alignment (see p.get("align_error"))
             site = None
+            site_labels = None
             if show_pocket:
-                site = [c["target_position"] for c in p["pocket_comparison"] if c["target_position"] is not None]
-            scene_structures.append(
-                {"label": label, "pdb_path": p["aligned_pdb"], "chain_id": p["chain"], "site_resseqs": site}
-            )
+                covered = [c for c in p["pocket_comparison"] if c["target_position"] is not None]
+                site = [c["target_position"] for c in covered]
+                site_labels = {c["target_position"]: f"{c['target_residue']}{c['target_position']}" for c in covered}
+
+            structure_entry = {
+                "label": label, "pdb_path": p["aligned_pdb"], "chain_id": p["chain"],
+                "site_resseqs": site, "site_labels": site_labels,
+            }
+
+            pdb = p.get("pdb")
+            if pdb is None:
+                no_pdb_labels.append(label)
+            elif show_pdb_overlay and pdb.get("aligned_pdb"):
+                pdb_site, pdb_site_labels = None, None
+                if show_pocket:
+                    pdb_site, pdb_site_labels = [], {}
+                    for canon_str, pdb_resseq in (pdb.get("pocket_resseq") or {}).items():
+                        if pdb_resseq is None:
+                            continue
+                        pdb_site.append(pdb_resseq)
+                        pdb_site_labels[pdb_resseq] = (site_labels or {}).get(int(canon_str), canon_str)
+                structure_entry["pdb_overlay"] = {
+                    "pdb_path": pdb["aligned_pdb"], "chain_id": pdb["chain"],
+                    "site_resseqs": pdb_site, "site_labels": pdb_site_labels,
+                    "ligand_resname": pdb.get("ligand_resname"),
+                }
+                ligand_note = f", ligand {pdb['ligand_resname']}" if pdb.get("ligand_resname") else " (apo)"
+                res_note = f"{pdb['resolution']:.2f}Å" if pdb.get("resolution") is not None else "resolution n/a"
+                pdb_caption_lines.append(f"{label}: PDB {pdb['pdb_id']} ({res_note}{ligand_note})")
+
+            scene_structures.append(structure_entry)
+
+        if pdb_caption_lines:
+            st.caption("Real PDB structure overlay (semi-transparent): " + " | ".join(pdb_caption_lines))
+        if no_pdb_labels:
+            st.caption(f"No RCSB structure found for: {', '.join(no_pdb_labels)} (AlphaFold model only)")
+
         if not scene_structures:
             st.info("No selected protein has a superposed coordinate file to show (all skipped during structural alignment?).")
         else:
-            view = scene.build_overlay_view(scene_structures, reference_label=reference)
+            view = scene.build_overlay_view(scene_structures, reference_label=reference, label_residues=label_residues)
             html = html_with_camera_events(view._make_html())
             view3d(html, height=650, reset_camera_token=st.session_state.camera_generation)
 

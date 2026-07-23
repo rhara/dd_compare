@@ -11,7 +11,7 @@ simplification relative to `dd_seqalign.scene`.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import py3Dmol
 
@@ -21,6 +21,8 @@ PALETTE = [
 ]
 REFERENCE_COLOR = "#444444"
 SITE_COLOR = "yellow"
+PDB_CARTOON_OPACITY = 0.35  # thinner/more transparent than the AlphaFold cartoon, so the two stay visually distinct
+LIGAND_COLOR = "#ff9900"
 
 # 3Dmol.js's built-in "*Carbon" colorschemes (e.g. "yellowCarbon") tint carbon
 # and leave every other element at its RasMol default, but only for a fixed
@@ -54,20 +56,66 @@ def assign_colors(labels: Sequence[str], reference_label: str) -> Dict[str, str]
     return colors
 
 
+def _ca_coords(pdb_path: str, chain_id: str, resnums: Sequence[int]) -> Dict[int, Tuple[float, float, float]]:
+    """CA atom position for each of `resnums` in the given chain, read
+    directly from the PDB file text (fixed-column parsing, same convention
+    as `pdbio.py`) -- py3Dmol/3Dmol.js has no synchronous "read back a
+    loaded model's coordinates" API from Python, so label placement needs
+    its own tiny parse of the same file `addModel` was given."""
+    wanted = set(resnums)
+    coords: Dict[int, Tuple[float, float, float]] = {}
+    for line in Path(pdb_path).read_text().splitlines():
+        if line[:6] != "ATOM  " or line[12:16].strip() != "CA" or line[21] != chain_id:
+            continue
+        try:
+            resseq = int(line[22:26])
+        except ValueError:
+            continue
+        if resseq in wanted and resseq not in coords:
+            coords[resseq] = (float(line[30:38]), float(line[38:46]), float(line[46:54]))
+    return coords
+
+
+def _add_site_labels(view: py3Dmol.view, pdb_path: str, chain_id: str, site_labels: Dict[int, str], color: str) -> None:
+    for resnum, coord in _ca_coords(pdb_path, chain_id, list(site_labels)).items():
+        view.addLabel(site_labels.get(resnum, str(resnum)), {
+            "position": {"x": coord[0], "y": coord[1], "z": coord[2]},
+            "backgroundColor": color, "backgroundOpacity": 0.8,
+            "fontColor": "white", "fontSize": 11, "showBackground": True, "borderThickness": 0.4,
+        })
+
+
 def build_overlay_view(
     structures: Sequence[dict], reference_label: str, *,
     colors: Optional[Dict[str, str]] = None, width: Union[int, str] = "100%", height: Union[int, str] = 600,
+    label_residues: bool = False,
 ) -> py3Dmol.view:
     """`structures`: each a dict with `label` (UniProt accession),
     `pdb_path` (superposed coordinates, from `structalign.align_structures`'s
-    `aligned_pdb`), `chain_id`, and `site_resseqs` (that protein's *own*
+    `aligned_pdb`), `chain_id`, `site_resseqs` (that protein's *own*
     AFDB residue numbers to highlight -- see `pocketmap.py`; empty/omitted
     draws no highlight for that structure, e.g. positions with no
-    counterpart in this particular protein)."""
+    counterpart in this particular protein), `site_labels` (optional
+    `{resnum: "K33"}` text for each of `site_resseqs`, used only when
+    `label_residues` is True -- one 3D text marker per lining residue,
+    anchored at its CA position and colored like that protein's cartoon),
+    and an optional `pdb_overlay` dict (from `pdbstruct.py`/`pipeline.py`'s
+    `pdb` report field) -- a real RCSB structure for the same protein,
+    already superposed onto the reference frame, drawn as a second,
+    semi-transparent cartoon alongside the AlphaFold one (never replacing
+    it -- see README "Why always AlphaFold"): `pdb_path`, `chain_id`,
+    `site_resseqs`/`site_labels` in *that structure's own* numbering (see
+    `pipeline.py`'s `pocket_resseq` mapping -- a real PDB entry's residue
+    numbers don't equal canonical UniProt position, unlike an AlphaFold
+    model), and `ligand_resname` (the bound ligand to render as sticks, if
+    any -- the actual payoff of overlaying a real structure at all)."""
     view = py3Dmol.view(width=width, height=height)
     colors = colors or assign_colors([s["label"] for s in structures], reference_label)
 
-    for model_index, s in enumerate(structures):
+    next_model = 0
+    for s in structures:
+        model_index = next_model
+        next_model += 1
         pdb_text = Path(s["pdb_path"]).read_text()
         view.addModel(pdb_text, "pdb")
         color = colors.get(s["label"], "gray")
@@ -85,6 +133,37 @@ def build_overlay_view(
                 {"model": model_index, "chain": s["chain_id"], "resi": list(site)},
                 {"stick": {"colorscheme": _carbon_tint_scheme(SITE_COLOR), "radius": 0.25}},
             )
+            if label_residues:
+                site_labels = {r: (s.get("site_labels") or {}).get(r, str(r)) for r in site}
+                _add_site_labels(view, s["pdb_path"], s["chain_id"], site_labels, color)
+
+        pdb_overlay = s.get("pdb_overlay")
+        if pdb_overlay:
+            pdb_model_index = next_model
+            next_model += 1
+            pdb_overlay_text = Path(pdb_overlay["pdb_path"]).read_text()
+            view.addModel(pdb_overlay_text, "pdb")
+            pdb_chain_sel = {"model": pdb_model_index, "chain": pdb_overlay["chain_id"]}
+
+            view.setStyle({"model": pdb_model_index}, {})
+            view.setStyle(pdb_chain_sel, {"cartoon": {"color": color, "opacity": PDB_CARTOON_OPACITY}})
+
+            pdb_site = pdb_overlay.get("site_resseqs")
+            if pdb_site:
+                view.addStyle(
+                    {"model": pdb_model_index, "chain": pdb_overlay["chain_id"], "resi": list(pdb_site)},
+                    {"stick": {"colorscheme": _carbon_tint_scheme(SITE_COLOR), "radius": 0.18}},
+                )
+                if label_residues:
+                    pdb_site_labels = {r: (pdb_overlay.get("site_labels") or {}).get(r, str(r)) for r in pdb_site}
+                    _add_site_labels(view, pdb_overlay["pdb_path"], pdb_overlay["chain_id"], pdb_site_labels, color)
+
+            ligand_resname = pdb_overlay.get("ligand_resname")
+            if ligand_resname:
+                view.addStyle(
+                    {"model": pdb_model_index, "resn": ligand_resname},
+                    {"stick": {"colorscheme": _carbon_tint_scheme(LIGAND_COLOR), "radius": 0.3}},
+                )
 
     view.zoomTo()
     return view

@@ -1,13 +1,13 @@
 {
   "reference": "Q8IZL9",
   "pocket": {
-    "receptor_pdb": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/Q8IZL9_AFDB.pdb",
+    "receptor_pdb": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/Q8IZL9_AFDB.pdb",
     "fpocket_id": 21,
     "rank": 1,
     "score": -0.166,
     "druggability_score": 0.646,
     "n_alpha_spheres": 95,
-    "volume": 822.946,
+    "volume": 817.166,
     "residues": [
       "A:10",
       "A:11",
@@ -49,7 +49,7 @@
       "rmsd": 0.0,
       "n_aligned_atoms": 0,
       "chain": "A",
-      "aligned_pdb": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned/Q8IZL9_aligned.pdb",
+      "aligned_pdb": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned/Q8IZL9_aligned.pdb",
       "align_error": null,
       "pocket_comparison": [
         {
@@ -220,17 +220,18 @@
           "target_residue": "R",
           "conservation": "identical"
         }
-      ]
+      ],
+      "pdb": null
     },
     {
       "accession": "P24941",
       "name": "Cyclin-dependent kinase 2",
       "length": 298,
       "pct_identity": 44.10774410774411,
-      "rmsd": 3.3868347282980604,
+      "rmsd": 3.386834728298077,
       "n_aligned_atoms": 264,
       "chain": "A",
-      "aligned_pdb": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned/P24941_aligned.pdb",
+      "aligned_pdb": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned/P24941_aligned.pdb",
       "align_error": null,
       "pocket_comparison": [
         {
@@ -401,17 +402,52 @@
           "target_residue": null,
           "conservation": "gap"
         }
-      ]
+      ],
+      "pdb": {
+        "pdb_id": "6Q4G",
+        "resolution": 0.98,
+        "ligand_resname": "HJK",
+        "chain": "A",
+        "aligned_pdb": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned_pdb/P24941_pdb_aligned.pdb",
+        "rmsd": 2.8502376178352913,
+        "n_aligned_atoms": 280,
+        "error": null,
+        "pocket_resseq": {
+          "10": 10,
+          "11": 11,
+          "12": 12,
+          "13": 13,
+          "14": 14,
+          "15": 15,
+          "18": 18,
+          "31": 31,
+          "33": 33,
+          "51": 51,
+          "64": 64,
+          "80": 80,
+          "81": 81,
+          "83": 83,
+          "127": 127,
+          "129": 129,
+          "131": 131,
+          "132": 132,
+          "134": 134,
+          "144": 144,
+          "145": 145,
+          "147": 147,
+          "148": 148
+        }
+      }
     },
     {
       "accession": "P20794",
       "name": "Serine/threonine-protein kinase MAK",
       "length": 623,
       "pct_identity": 36.54970760233918,
-      "rmsd": 2.5314280599089845,
+      "rmsd": 2.5314280599090044,
       "n_aligned_atoms": 288,
       "chain": "A",
-      "aligned_pdb": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned/P20794_aligned.pdb",
+      "aligned_pdb": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned/P20794_aligned.pdb",
       "align_error": null,
       "pocket_comparison": [
         {
@@ -582,7 +618,8 @@
           "target_residue": "V",
           "conservation": "non-conservative"
         }
-      ]
+      ],
+      "pdb": null
     }
   ]
 }

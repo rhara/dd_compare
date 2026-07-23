@@ -37,6 +37,19 @@ def build_fetch_parser() -> argparse.ArgumentParser:
 def _add_align_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--reference", default=None, help="Accession to superpose everything onto and detect the pocket on (default: the first accession fetched)")
     parser.add_argument("--pocket-rank", type=int, default=1, help="Druggability-ranked pocket to use on the reference (default: 1, top-ranked)")
+    parser.add_argument(
+        "--no-pdb-overlay", action="store_true",
+        help="Skip looking up each protein's real RCSB structures. By default, when a protein has any, one "
+             "(preferring a ligand-bound entry, else best resolution) is fetched and superposed onto the "
+             "reference alongside its AlphaFold model, purely as an additional visual layer -- pocket detection "
+             "and the cross-protein sequence/pocket mapping always stay anchored on the AlphaFold model.",
+    )
+    parser.add_argument(
+        "--pdb-scan-cap", type=int, default=25,
+        help="With PDB overlay enabled: how many resolution-ranked candidate structures to check for a bound "
+             "ligand before falling back to the best-resolution one (default: 25) -- caps network/download cost "
+             "for well-studied targets with hundreds of entries.",
+    )
     parser.add_argument("--no-progress", action="store_true", help="Suppress the one-line-per-item progress output")
 
 
@@ -88,6 +101,7 @@ def main_align(argv=None) -> None:
     args = build_align_parser().parse_args(argv)
     report = pipeline.analyze(
         args.out_dir, reference=args.reference, pocket_rank=args.pocket_rank, show_progress=not args.no_progress,
+        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap,
     )
     _print_report(report, args.out_dir)
 
@@ -99,6 +113,7 @@ def main_run(argv=None) -> None:
     pipeline.fetch_all(args.accessions, args.out_dir, show_progress=not args.no_progress)
     report = pipeline.analyze(
         args.out_dir, reference=args.reference, pocket_rank=args.pocket_rank, show_progress=not args.no_progress,
+        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap,
     )
     _print_report(report, args.out_dir)
 

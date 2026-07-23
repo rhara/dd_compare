@@ -46,9 +46,15 @@ is what gets translated across proteins.
   comparison (the pocket-residue mapping table, colored by conservation),
   Structure overlay (`dd_viewer`'s double-buffered `view3d` component,
   vendored and trimmed -- every protein's AlphaFold model superposed,
-  distinctly colored, reference pocket residues highlighted on each),
-  Candidates (only shown if `candidates.json` exists in the report
-  directory -- the ranked output of a prior `--discover` run).
+  distinctly colored, reference pocket residues highlighted on each, with
+  an optional text label per pocket residue -- toggle both the highlight
+  and the labels from the sidebar, independent of which proteins are
+  shown), Candidates (only shown if `candidates.json` exists in the report
+  directory -- the ranked output of a prior `--discover` run). When a
+  protein has a real RCSB structure (see "Real-structure overlay" below),
+  the sidebar's "Show real PDB structure when available" toggle draws it
+  as a second, semi-transparent layer alongside its AlphaFold model, with
+  any bound ligand rendered as sticks.
 
 ## Worked example: CDK20 vs. CDK2 vs. MAK
 
@@ -69,6 +75,11 @@ pocket residues -- plus position 305 as an outright gap in CDK2 (whose
 canonical sequence, at 298 aa, is simply shorter than CDK20's 346).
 `data/example_cdk20_cdk2_mak/` is committed as a full worked example
 (fetched sequences/structures, `report.json`, superposed coordinates).
+CDK2 also has a real, ligand-bound RCSB structure (`6Q4G`, 0.98 Å, bound
+ligand `HJK`) picked automatically by the real-structure overlay (see
+below) -- the app draws it as a semi-transparent layer alongside CDK2's
+AlphaFold model, so the reference's mapped pocket residues can be checked
+against where a real ligand actually sits.
 
 ## Similar-protein discovery
 
@@ -121,10 +132,29 @@ streamlit run app.py -- --report-dir data
 pocket gets detected and which structure everything else is superposed
 onto. `--pocket-rank` (default 1, top-ranked by fpocket's Druggability
 Score) picks a different pocket on the reference if the top one isn't the
-site of interest.
+site of interest. `--no-pdb-overlay` skips the real-RCSB-structure lookup
+described below (fetch/align only against AlphaFold models, as in earlier
+versions); `--pdb-scan-cap N` (default 25) caps how many resolution-ranked
+candidates get downloaded and checked for a bound ligand before falling
+back to best-resolution, for a target with hundreds of structures.
 
 All commands print one line per completed item as it happens; pass
 `--no-progress` to suppress this and only print the final summary.
+
+## Real-structure overlay
+
+`dd_compare-align`/`-run` also looks up, for every protein, whether it has
+any real RCSB structures and -- if so -- picks one (preferring an entry
+with a genuine bound ligand, not water/cryoprotectant/cofactor; among
+ligand-bound entries, or if none are, the best resolution) and superposes
+it onto the reference alongside that protein's AlphaFold model. This is
+purely an *additional* visualization layer: pocket detection and the
+cross-protein sequence/pocket mapping stay anchored on the AlphaFold model
+unconditionally, exactly as before -- see "Why always AlphaFold" below,
+which still holds for the actual comparison. `report.json` records the
+pick per protein (`pdb.pdb_id`, `.resolution`, `.ligand_resname`, ...); a
+protein with no RCSB structures at all (e.g. CDK20 itself) simply has
+`pdb: null`.
 
 ## Design notes
 
@@ -138,21 +168,36 @@ All commands print one line per completed item as it happens; pass
   `dd_seqalign`'s other structural-fit mode, `cmd.pair_fit` on a known 1:1
   residue correspondence, is *not* carried over: it relies on both sides
   already sharing canonical UniProt positions, which only makes sense for
-  multiple structures of the *same* protein.
-- **Why always AlphaFold, never a PDB structure**: picking "the best
-  available PDB structure, falling back to AlphaFold" would make quality
-  and ligand-bound state vary protein-by-protein (see the CDK20/CDK2/MAK
-  numbers above -- 0 vs. 512 vs. 0 real structures), confounding "is this
-  active-site difference real biology, or an artifact of comparing a real
-  co-crystal against an apo model?" Using the AlphaFold model uniformly
-  keeps every comparison apples-to-apples. A useful side effect: an
-  AlphaFold model's residue numbering is always identical to its own
+  multiple structures of the *same* protein. `pdbstruct.py` (the
+  real-structure-overlay lookup, see above) additionally vendors
+  `dd_seqalign.fetch`'s RCSB search/download functions and
+  `dd_seqalign.sequence`'s per-chain canonical-sequence alignment
+  (`pick_target_chain`, `align_to_canonical`) -- needed here to pick the
+  right chain out of a real PDB entry that may include a bound partner
+  (e.g. a cyclin) and to translate a reference pocket residue (defined in
+  canonical numbering) into that entry's own, non-canonical residue
+  numbers for label placement, something the AlphaFold-only path never
+  needed (see below).
+- **Why always AlphaFold, never a PDB structure -- for the comparison
+  itself**: picking "the best available PDB structure, falling back to
+  AlphaFold" would make quality and ligand-bound state vary
+  protein-by-protein (see the CDK20/CDK2/MAK numbers above -- 0 vs. 512
+  vs. 0 real structures), confounding "is this active-site difference real
+  biology, or an artifact of comparing a real co-crystal against an apo
+  model?" Using the AlphaFold model uniformly keeps pocket detection and
+  the cross-protein sequence/pocket mapping apples-to-apples -- this still
+  holds unconditionally even with the real-structure overlay above, which
+  is display-only and never feeds back into either. A useful side effect:
+  an AlphaFold model's residue numbering is always identical to its own
   canonical UniProt sequence position (no gaps, insertions, or alternate
   numbering), so a pocket residue detected on the reference is already
   expressed in the same coordinate system the cross-protein sequence
   alignment itself uses -- no separate structure-numbering round-trip is
-  needed here, unlike `dd_seqalign.activesite` (which exists specifically
-  to handle real PDB structures' non-canonical numbering).
+  needed for that part, unlike `dd_seqalign.activesite` (which exists
+  specifically to handle real PDB structures' non-canonical numbering) and
+  unlike `pdbstruct.py`'s own overlay-label placement, which does need
+  exactly that round-trip since it's translating onto a real structure's
+  numbering.
 - **Why global, not glocal, sequence alignment**: `dd_seqalign` aligns
   fragments/isoforms of the *same* protein against its own canonical
   sequence with free end gaps (glocal), since a co-crystal fragment missing
@@ -194,5 +239,12 @@ All commands print one line per completed item as it happens; pass
   force a specific residue into the comparison if fpocket's geometric
   pocket detection doesn't select it.
 - **Always the AlphaFold model, never a real ligand-bound conformation**
-  (a deliberate choice, see "Design notes" above) -- induced-fit pocket
-  changes upon ligand binding are out of scope for this comparison.
+  for the actual comparison (a deliberate choice, see "Design notes"
+  above) -- induced-fit pocket changes upon ligand binding are out of
+  scope there; the real-structure overlay is display-only.
+- **Real-structure overlay picks one entry per protein**, preferring a
+  ligand-bound one among the best-resolution `--pdb-scan-cap` candidates --
+  it does not scan every structure for a target with hundreds of them
+  (e.g. CDK2's 512), so a ligand-bound entry outside that scanned window
+  could be missed, and it does not show every ligand a target has ever
+  been crystallized with, just the one entry picked.
