@@ -22,7 +22,10 @@ own -- so the reference's pocket, not a fixed set of canonical positions,
 is what gets translated across proteins.
 
 - **Fetch (`dd_compare-fetch`)**: canonical sequence + AlphaFold DB model
-  for each accession (skips anything already on disk on a re-run).
+  for each accession (skips anything already on disk on a re-run), plus
+  (unless `--no-pdb-overlay`) looks up and selects each protein's real RCSB
+  structures too (see "Real-structure overlay" below) -- all genuinely
+  fetch-time network work, all cached, recorded in `manifest.json`.
   `--discover SEED_ACC` instead proposes candidate similar proteins for one
   seed accession (see "Similar-protein discovery" below) and writes
   `candidates.json` -- a proposal only; pick the accessions you actually
@@ -35,10 +38,14 @@ is what gets translated across proteins.
   pocket-lining residues onto each protein's own numbering. Each mapped
   position is classified `identical` / `conservative` / `non-conservative`
   / `gap` (BLOSUM62 score sign, not a hand-maintained substitution-group
-  table -- see `dd_compare/sequence.py`). Every protein's AlphaFold model is
+  table -- see `dd_compare/sequence.py`). Every protein's AlphaFold model,
+  and every real structure `dd_compare-fetch` already selected for it, is
   then superposed onto the reference via whole-chain PyMOL `cealign`
   (topology-only, no shared numbering needed -- unlike `dd_seqalign`'s other
-  fit mode, this has no cross-protein equivalent of `pair_fit`).
+  fit mode, this has no cross-protein equivalent of `pair_fit`). This step
+  makes no RCSB network calls itself -- re-running align (e.g. to try a
+  different `--reference`/`--pocket-rank`) only reuses what fetch already
+  cached.
 - **Run (`dd_compare-run`)**: fetch + align in one step (explicit accession
   list only -- run `--discover` separately first if you want suggestions).
 - **App (`streamlit run app.py -- --report-dir DIR`)**: four tabs --
@@ -136,33 +143,51 @@ streamlit run app.py -- --report-dir data
 pocket gets detected and which structure everything else is superposed
 onto. `--pocket-rank` (default 1, top-ranked by fpocket's Druggability
 Score) picks a different pocket on the reference if the top one isn't the
-site of interest. `--no-pdb-overlay` skips the real-RCSB-structure lookup
-described below (fetch/align only against AlphaFold models, as in earlier
-versions); `--pdb-max-structures N` (default 3) caps how many distinct
-ligand-bound real structures are kept per protein; `--pdb-resolution-cutoff
-N` (default 2.0, Angstrom) excludes any candidate worse than this
-resolution -- or with no reported resolution at all, e.g. NMR structures
--- before it's even downloaded, for both the ligand-bound and
-best-resolution-fallback paths; `--pdb-scan-cap N` (default 25) caps how
-many resolution-ranked candidates get checked for a bound ligand, at most,
-before giving up on finding `--pdb-max-structures` of them and falling
-back to the single best-resolution one, for a target with hundreds of
-structures.
+site of interest.
+
+`dd_compare-fetch`/`-run` additionally take (see "Real-structure overlay"
+below for what they control): `--no-pdb-overlay` skips the real-RCSB-
+structure lookup entirely (fetch/align only against AlphaFold models, as
+in earlier versions); `--pdb-max-structures N` (default 3) caps how many
+distinct ligand-bound real structures are kept per protein;
+`--pdb-resolution-cutoff N` (default 2.0, Angstrom) excludes any candidate
+worse than this resolution -- or with no reported resolution at all, e.g.
+NMR structures -- before it's even downloaded, for both the ligand-bound
+and best-resolution-fallback paths; `--pdb-scan-cap N` (default 25) caps
+how many resolution-ranked candidates get checked for a bound ligand, at
+most, before giving up on finding `--pdb-max-structures` of them and
+falling back to the single best-resolution one, for a target with
+hundreds of structures. `dd_compare-align` doesn't take any of these --
+it never makes RCSB network calls itself, only reusing whatever
+`dd_compare-fetch` already cached (see below).
 
 All commands print one line per completed item as it happens; pass
 `--no-progress` to suppress this and only print the final summary.
 
 ## Real-structure overlay
 
-`dd_compare-align`/`-run` also looks up, for every protein, whether it has
-any real RCSB structures at or better than `--pdb-resolution-cutoff` and --
-if so -- picks up to `--pdb-max-structures` of them, one per *distinct*
+`dd_compare-fetch`/`-run` look up, for every protein, whether it has any
+real RCSB structures at or better than `--pdb-resolution-cutoff` and -- if
+so -- select up to `--pdb-max-structures` of them, one per *distinct*
 bound ligand (not water/cryoprotectant/cofactor; the best-resolution entry
 for each ligand wins if the same ligand shows up in more than one
 candidate), falling back to a single best-resolution entry (still subject
 to the same cutoff) if none of the scanned candidates has a ligand at all
--- and superposes each onto the reference alongside that protein's
-AlphaFold model. This is purely an *additional* visualization layer:
+-- recorded in `manifest.json`. This selection is genuinely fetch-time
+network work, cached exactly like the canonical-sequence/AlphaFold-model
+downloads: **want more real structures for a protein you already
+fetched?** just re-run `dd_compare-fetch` for the same `-o` directory with
+a larger `--pdb-max-structures` (and/or looser `--pdb-resolution-cutoff`)
+-- already-downloaded entries are reused, only the additional candidates
+needed get fetched:
+
+```bash
+dd_compare-fetch Q8IZL9 P24941 P20794 -o data --pdb-max-structures 6
+```
+
+`dd_compare-align` then superposes every already-selected real structure
+onto the reference alongside that protein's AlphaFold model, with no RCSB
+calls of its own. This is purely an *additional* visualization layer:
 pocket detection and the cross-protein sequence/pocket mapping stay
 anchored on the AlphaFold model unconditionally, exactly as before -- see
 "Why always AlphaFold" below, which still holds for the actual comparison.

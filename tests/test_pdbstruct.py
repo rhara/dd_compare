@@ -13,6 +13,7 @@ from dd_compare.pdbstruct import (
     EntryMetadata,
     align_to_canonical,
     pick_target_chain,
+    rehydrate_selection,
     select_pdb_structures,
 )
 
@@ -240,3 +241,22 @@ def test_select_pdb_structures_collects_multiple_distinct_ligands_up_to_cap(tmp_
     assert [s.ligand_resname for s in sels] == ["LGA", "LGB", "LGC"]
     assert "3CCC" in downloaded  # scanned and correctly recognized as a duplicate ligand
     assert "5EEE" not in downloaded  # stopped scanning once max_structures distinct ligands were reached
+
+
+def test_rehydrate_selection_reconstructs_without_network(tmp_path):
+    # rehydrate_selection is what pipeline.analyze uses to reload a
+    # fetch-time pick from manifest.json -- no RCSB calls at all, just
+    # re-reading the already-downloaded file and re-running the local
+    # canonical-sequence alignment.
+    pdb_path = tmp_path / "9XYZ.pdb"
+    pdb_path.write_text(_ligand_pdb("LIG"))
+
+    sel = rehydrate_selection(
+        "P00000", "A", pdb_id="9XYZ", resolution=1.23, chain_id="A",
+        pdb_path=str(pdb_path), ligand_resname="LIG",
+    )
+
+    assert sel.pdb_id == "9XYZ"
+    assert sel.resolution == 1.23
+    assert sel.ligand_resname == "LIG"
+    assert sel.chain_alignment.resseq_for_canonical(1) == 1  # the fixture's single ALA at resseq 1

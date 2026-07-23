@@ -5,21 +5,46 @@
       "name": "Cyclin-dependent kinase 20",
       "length": 346,
       "fasta_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/Q8IZL9.fasta",
-      "afdb_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/Q8IZL9_AFDB.pdb"
+      "afdb_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/Q8IZL9_AFDB.pdb",
+      "pdb_structures": []
     },
     {
       "accession": "P24941",
       "name": "Cyclin-dependent kinase 2",
       "length": 298,
       "fasta_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/P24941.fasta",
-      "afdb_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/P24941_AFDB.pdb"
+      "afdb_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/P24941_AFDB.pdb",
+      "pdb_structures": [
+        {
+          "pdb_id": "6Q4G",
+          "resolution": 0.98,
+          "chain": "A",
+          "pdb_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw_pdb/6Q4G.pdb",
+          "ligand_resname": "HJK"
+        },
+        {
+          "pdb_id": "6Q49",
+          "resolution": 1.0,
+          "chain": "A",
+          "pdb_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw_pdb/6Q49.pdb",
+          "ligand_resname": "HGQ"
+        },
+        {
+          "pdb_id": "6Q4H",
+          "resolution": 1.0,
+          "chain": "A",
+          "pdb_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw_pdb/6Q4H.pdb",
+          "ligand_resname": "HGH"
+        }
+      ]
     },
     {
       "accession": "P20794",
       "name": "Serine/threonine-protein kinase MAK",
       "length": 623,
       "fasta_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/P20794.fasta",
-      "afdb_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/P20794_AFDB.pdb"
+      "afdb_path": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/P20794_AFDB.pdb",
+      "pdb_structures": []
     }
   ]
 }

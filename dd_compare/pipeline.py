@@ -1,15 +1,22 @@
 """End-to-end orchestration in three phases:
 
 - `fetch_all`: given a list of UniProt accessions, download each protein's
-  canonical sequence and AlphaFold DB model, writing `manifest.json`.
+  canonical sequence and AlphaFold DB model, and (unless disabled) look up
+  and select its real RCSB structures too -- all genuinely fetch-time
+  network work, all cached on disk -- writing `manifest.json`.
 - `discover`: given one seed accession, propose candidate similar proteins
   (`similarity.py`), writing `candidates.json` -- a human-reviewed proposal,
   not automatically fed into `fetch_all`.
 - `analyze`: pick a reference protein, detect its druggable pocket, align
   every other protein's canonical sequence to the reference and map the
-  pocket onto each, then superpose every AlphaFold model onto the reference
-  via whole-chain `cealign`, writing `report.json` plus the superposed
-  coordinate files under `aligned/`.
+  pocket onto each, then superpose every AlphaFold model -- and every
+  already-selected real structure, rehydrated from `manifest.json` with no
+  network access -- onto the reference via whole-chain `cealign`, writing
+  `report.json` plus the superposed coordinate files under `aligned/`.
+  Real-structure *selection* is deliberately not repeated here: it's
+  fetch-time work, done once in `fetch_all`, exactly like canonical-
+  sequence/AlphaFold-model fetching -- re-running `analyze` (e.g. to try a
+  different `--reference`/`--pocket-rank`) never re-hits RCSB.
 """
 from __future__ import annotations
 
@@ -26,10 +33,20 @@ def _read_fasta(path: Union[str, Path]) -> str:
     return "".join(Path(path).read_text().splitlines()[1:])
 
 
-def fetch_all(accessions: Sequence[str], out_dir: Union[str, Path], *, show_progress: bool = True) -> dict:
-    """Download every protein's canonical sequence + AlphaFold DB model.
-    Cached: re-running against the same `out_dir` skips anything already on
-    disk."""
+def fetch_all(
+    accessions: Sequence[str], out_dir: Union[str, Path], *, show_progress: bool = True,
+    pdb_overlay: bool = True, pdb_scan_cap: int = 25, pdb_max_structures: int = 3,
+    pdb_resolution_cutoff: float = 2.0,
+) -> dict:
+    """Download every protein's canonical sequence + AlphaFold DB model,
+    and (unless `pdb_overlay` is False) look up and select its real RCSB
+    structures too (see `pdbstruct.select_pdb_structures`). Cached:
+    re-running against the same `out_dir` skips anything already on disk
+    -- including individual real-structure downloads, so raising
+    `pdb_max_structures` or loosening `pdb_resolution_cutoff` on a later
+    call cheaply reuses whatever was already fetched and only spends new
+    network time on the additional candidates needed to satisfy the wider
+    request."""
     out_dir = Path(out_dir).resolve()
     raw_dir = out_dir / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
@@ -58,9 +75,30 @@ def fetch_all(accessions: Sequence[str], out_dir: Union[str, Path], *, show_prog
             status = "already downloaded, skipping" if already_had_it else "-> " + afdb_dest.name
             print(f"[fetch] ({i}/{len(accessions)}) {acc}: AlphaFold DB model {status}", flush=True)
 
-        proteins.append(
-            {"accession": acc, "name": name, "length": len(canonical), "fasta_path": str(fasta_dest), "afdb_path": str(afdb_dest)}
-        )
+        pdb_structures: List[dict] = []
+        if pdb_overlay:
+            try:
+                selections = pdbstruct.select_pdb_structures(
+                    acc, canonical, out_dir / "raw_pdb", scan_cap=pdb_scan_cap,
+                    max_structures=pdb_max_structures, resolution_cutoff=pdb_resolution_cutoff,
+                    show_progress=show_progress,
+                )
+            except Exception as e:
+                if show_progress:
+                    print(f"[fetch] ({i}/{len(accessions)}) {acc}: real-structure lookup failed ({e}), skipping", flush=True)
+                selections = []
+            pdb_structures = [
+                {
+                    "pdb_id": s.pdb_id, "resolution": s.resolution, "chain": s.chain_id,
+                    "pdb_path": s.pdb_path, "ligand_resname": s.ligand_resname,
+                }
+                for s in selections
+            ]
+
+        proteins.append({
+            "accession": acc, "name": name, "length": len(canonical), "fasta_path": str(fasta_dest),
+            "afdb_path": str(afdb_dest), "pdb_structures": pdb_structures,
+        })
 
     manifest = {"proteins": proteins}
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
@@ -85,8 +123,6 @@ def discover(
 
 def analyze(
     out_dir: Union[str, Path], *, reference: Optional[str] = None, pocket_rank: int = 1, show_progress: bool = True,
-    pdb_overlay: bool = True, pdb_scan_cap: int = 25, pdb_max_structures: int = 3,
-    pdb_resolution_cutoff: float = 2.0,
 ) -> dict:
     """Run pocket detection + cross-protein alignment + structural overlay
     across every protein `fetch_all` downloaded into `out_dir`. `reference`
@@ -152,24 +188,23 @@ def analyze(
         )
     }
 
-    pdb_overlay_results: Dict[str, List[pdbstruct.PdbOverlayResult]] = {}
     pdb_selections: Dict[str, List[pdbstruct.SelectedPdbStructure]] = {}
-    if pdb_overlay:
-        for acc in proteins:
+    for acc, info in proteins.items():
+        sels = []
+        for cached in info.get("pdb_structures") or []:
             try:
-                pdb_selections[acc] = pdbstruct.select_pdb_structures(
-                    acc, canonical_by_acc[acc], out_dir / "raw_pdb", scan_cap=pdb_scan_cap,
-                    max_structures=pdb_max_structures, resolution_cutoff=pdb_resolution_cutoff,
-                    show_progress=show_progress,
-                )
+                sels.append(pdbstruct.rehydrate_selection(
+                    acc, canonical_by_acc[acc], pdb_id=cached["pdb_id"], resolution=cached["resolution"],
+                    chain_id=cached["chain"], pdb_path=cached["pdb_path"], ligand_resname=cached["ligand_resname"],
+                ))
             except Exception as e:
                 if show_progress:
-                    print(f"[pdb-overlay] {acc}: lookup failed ({e}), skipping", flush=True)
-                pdb_selections[acc] = []
-        pdb_overlay_results = pdbstruct.align_pdb_overlays(
-            proteins[reference]["afdb_path"], reference, pdb_selections,
-            out_dir / "aligned_pdb", show_progress=show_progress,
-        )
+                    print(f"[align] {acc}: couldn't reload cached real structure {cached.get('pdb_id')} ({e}), skipping", flush=True)
+        pdb_selections[acc] = sels
+    pdb_overlay_results = pdbstruct.align_pdb_overlays(
+        proteins[reference]["afdb_path"], reference, pdb_selections,
+        out_dir / "aligned_pdb", show_progress=show_progress,
+    )
 
     def _pdb_report(acc: str) -> list:
         out = []

@@ -341,6 +341,27 @@ def _finalize_selection(
     )
 
 
+def rehydrate_selection(
+    accession: str, canonical_seq: str, *, pdb_id: str, resolution: Optional[float], chain_id: str,
+    pdb_path: str, ligand_resname: Optional[str],
+) -> SelectedPdbStructure:
+    """Reconstruct a `SelectedPdbStructure` from a previously-cached pick
+    (`fetch_all`'s manifest.json entry) without any network access -- just
+    re-reads the already-downloaded `pdb_path` and re-runs the local
+    canonical-sequence alignment for the (already-known) `chain_id`. Used
+    by `pipeline.analyze` so re-running the align step never re-hits RCSB:
+    the real network lookup/selection only happens once, in `fetch_all`,
+    exactly like canonical-sequence/AlphaFold-model fetching already
+    works -- `select_pdb_structures` itself is for that fetch-time
+    lookup, not for align-time reuse."""
+    chains = extract_chain_sequences(pdb_path)
+    alignment = align_to_canonical(chains[chain_id], canonical_seq)
+    return SelectedPdbStructure(
+        accession=accession, pdb_id=pdb_id, resolution=resolution, chain_id=chain_id, pdb_path=pdb_path,
+        ligand_resname=ligand_resname, chain_alignment=alignment, n_candidates_scanned=0,
+    )
+
+
 @dataclass
 class PdbOverlayResult:
     accession: str

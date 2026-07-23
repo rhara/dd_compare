@@ -11,6 +11,41 @@ import argparse
 from . import pipeline
 
 
+def _add_pdb_fetch_args(parser: argparse.ArgumentParser) -> None:
+    """Real-RCSB-structure lookup/selection flags -- genuinely fetch-time
+    network work (see `pipeline.fetch_all`), so shared by `dd_compare-fetch`
+    and `dd_compare-run` only, not `dd_compare-align` (which just reuses
+    whatever was already fetched, with no network access -- re-running
+    align never re-hits RCSB, so it has nothing to configure here)."""
+    parser.add_argument(
+        "--no-pdb-overlay", action="store_true",
+        help="Skip looking up each protein's real RCSB structures. By default, when a protein has any, up to "
+             "--pdb-max-structures of them (preferring distinct ligand-bound entries, else best resolution) are "
+             "fetched for later superposition onto the reference alongside its AlphaFold model, purely as an "
+             "additional visual layer -- pocket detection and the cross-protein sequence/pocket mapping always "
+             "stay anchored on the AlphaFold model.",
+    )
+    parser.add_argument(
+        "--pdb-max-structures", type=int, default=3,
+        help="With PDB overlay enabled: how many distinct-ligand real structures to fetch per protein (default: 3). "
+             "Re-running fetch with a larger value cheaply extends what's already cached on disk.",
+    )
+    parser.add_argument(
+        "--pdb-scan-cap", type=int, default=25,
+        help="With PDB overlay enabled: how many resolution-ranked candidate structures to check for a bound "
+             "ligand, at most, before giving up on finding --pdb-max-structures of them and falling back to the "
+             "best-resolution one (default: 25) -- caps network/download cost for well-studied targets with "
+             "hundreds of entries.",
+    )
+    parser.add_argument(
+        "--pdb-resolution-cutoff", type=float, default=2.0,
+        help="With PDB overlay enabled: worst resolution (Angstrom, lower is better) a real structure may have to "
+             "be considered at all (default: 2.0) -- entries worse than this, or with no reported resolution "
+             "(e.g. NMR), are skipped before download, for both the ligand-bound and best-resolution-fallback "
+             "paths.",
+    )
+
+
 def build_fetch_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dd_compare-fetch",
@@ -30,6 +65,7 @@ def build_fetch_parser() -> argparse.ArgumentParser:
         "--any-organism", action="store_true",
         help="With --discover: don't restrict candidates to the seed's own organism",
     )
+    _add_pdb_fetch_args(parser)
     parser.add_argument("--no-progress", action="store_true", help="Suppress the one-line-per-item progress output")
     return parser
 
@@ -37,32 +73,6 @@ def build_fetch_parser() -> argparse.ArgumentParser:
 def _add_align_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--reference", default=None, help="Accession to superpose everything onto and detect the pocket on (default: the first accession fetched)")
     parser.add_argument("--pocket-rank", type=int, default=1, help="Druggability-ranked pocket to use on the reference (default: 1, top-ranked)")
-    parser.add_argument(
-        "--no-pdb-overlay", action="store_true",
-        help="Skip looking up each protein's real RCSB structures. By default, when a protein has any, up to "
-             "--pdb-max-structures of them (preferring distinct ligand-bound entries, else best resolution) are "
-             "fetched and superposed onto the reference alongside its AlphaFold model, purely as an additional "
-             "visual layer -- pocket detection and the cross-protein sequence/pocket mapping always stay anchored "
-             "on the AlphaFold model.",
-    )
-    parser.add_argument(
-        "--pdb-max-structures", type=int, default=3,
-        help="With PDB overlay enabled: how many distinct-ligand real structures to fetch per protein (default: 3).",
-    )
-    parser.add_argument(
-        "--pdb-scan-cap", type=int, default=25,
-        help="With PDB overlay enabled: how many resolution-ranked candidate structures to check for a bound "
-             "ligand, at most, before giving up on finding --pdb-max-structures of them and falling back to the "
-             "best-resolution one (default: 25) -- caps network/download cost for well-studied targets with "
-             "hundreds of entries.",
-    )
-    parser.add_argument(
-        "--pdb-resolution-cutoff", type=float, default=2.0,
-        help="With PDB overlay enabled: worst resolution (Angstrom, lower is better) a real structure may have to "
-             "be considered at all (default: 2.0) -- entries worse than this, or with no reported resolution "
-             "(e.g. NMR), are skipped before download, for both the ligand-bound and best-resolution-fallback "
-             "paths.",
-    )
     parser.add_argument("--no-progress", action="store_true", help="Suppress the one-line-per-item progress output")
 
 
@@ -70,7 +80,8 @@ def build_align_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dd_compare-align",
         description="Detect the reference protein's druggable pocket, align every other protein's sequence to it "
-                    "and map the pocket onto each, then superpose every protein's AlphaFold model onto the reference.",
+                    "and map the pocket onto each, then superpose every protein's AlphaFold model (and any real "
+                    "RCSB structures dd_compare-fetch already selected) onto the reference.",
     )
     parser.add_argument("out_dir", help="Directory previously populated by dd_compare-fetch")
     _add_align_args(parser)
@@ -85,6 +96,7 @@ def build_run_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("accessions", nargs="+", help="UniProt accessions, e.g. Q8IZL9 P24941 P20794")
     parser.add_argument("-o", "--out-dir", required=True, help="Output directory")
+    _add_pdb_fetch_args(parser)
     _add_align_args(parser)
     return parser
 
@@ -106,7 +118,11 @@ def main_fetch(argv=None) -> None:
 
     if len(args.accessions) < 2:
         raise SystemExit("dd_compare-fetch: pass at least 2 accessions to compare, or --discover SEED_ACC")
-    manifest = pipeline.fetch_all(args.accessions, args.out_dir, show_progress=not args.no_progress)
+    manifest = pipeline.fetch_all(
+        args.accessions, args.out_dir, show_progress=not args.no_progress,
+        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap,
+        pdb_max_structures=args.pdb_max_structures, pdb_resolution_cutoff=args.pdb_resolution_cutoff,
+    )
     print(f"\n[done] {len(manifest['proteins'])} protein(s) -> {args.out_dir}")
 
 
@@ -114,8 +130,6 @@ def main_align(argv=None) -> None:
     args = build_align_parser().parse_args(argv)
     report = pipeline.analyze(
         args.out_dir, reference=args.reference, pocket_rank=args.pocket_rank, show_progress=not args.no_progress,
-        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap,
-        pdb_max_structures=args.pdb_max_structures, pdb_resolution_cutoff=args.pdb_resolution_cutoff,
     )
     _print_report(report, args.out_dir)
 
@@ -124,11 +138,13 @@ def main_run(argv=None) -> None:
     args = build_run_parser().parse_args(argv)
     if len(args.accessions) < 2:
         raise SystemExit("dd_compare-run: pass at least 2 accessions to compare")
-    pipeline.fetch_all(args.accessions, args.out_dir, show_progress=not args.no_progress)
-    report = pipeline.analyze(
-        args.out_dir, reference=args.reference, pocket_rank=args.pocket_rank, show_progress=not args.no_progress,
+    pipeline.fetch_all(
+        args.accessions, args.out_dir, show_progress=not args.no_progress,
         pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap,
         pdb_max_structures=args.pdb_max_structures, pdb_resolution_cutoff=args.pdb_resolution_cutoff,
+    )
+    report = pipeline.analyze(
+        args.out_dir, reference=args.reference, pocket_rank=args.pocket_rank, show_progress=not args.no_progress,
     )
     _print_report(report, args.out_dir)
 
