@@ -1,0 +1,145 @@
+"""Streamlit UI for dd_compare.
+
+Run with `streamlit run app.py -- --report-dir data` (after `dd_compare-run`/
+`dd_compare-fetch`+`dd_compare-align` have populated that directory with
+`report.json` and `aligned/*_aligned.pdb`), or just `streamlit run app.py`
+and enter the directory in the sidebar.
+"""
+import argparse
+import json
+import sys
+from pathlib import Path
+
+import streamlit as st
+
+from dd_compare import dashboard, scene
+from dd_compare.viewer3d import html_with_camera_events, view3d
+
+st.set_page_config(page_title="dd_compare", layout="wide")
+
+CONSERVATION_COLORS = {
+    "identical": "#c8e6c9",
+    "conservative": "#fff59d",
+    "non-conservative": "#ef9a9a",
+    "gap": "#e0e0e0",
+}
+
+
+def _parse_cli_defaults() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--report-dir")
+    args, _ = parser.parse_known_args(sys.argv[1:])
+    return args
+
+
+@st.cache_data(show_spinner=False)
+def _load_json(path: str) -> dict:
+    return json.loads(Path(path).read_text())
+
+
+def main() -> None:
+    defaults = _parse_cli_defaults()
+    st.title("dd_compare -- cross-protein structure & active-site comparison")
+
+    with st.sidebar:
+        st.header("Report")
+        report_dir = st.text_input("Report directory (dd_compare-run/-align output)", value=defaults.report_dir or "data")
+
+    report_path = Path(report_dir) / "report.json"
+    if not report_path.exists():
+        st.info(f"No report.json found in {report_dir!r}. Run `dd_compare-run ACC1 ACC2 [...] -o {report_dir}` first.")
+        st.stop()
+
+    report = _load_json(str(report_path))
+    proteins = report["proteins"]
+    labels = [p["accession"] for p in proteins]
+    reference = report["reference"]
+
+    st.caption(
+        f"Reference: {reference} -- {len(labels)} proteins -- "
+        f"pocket: {len(report['pocket']['residues'])} residue(s) (druggability={report['pocket']['druggability_score']:.2f})"
+    )
+
+    with st.sidebar:
+        st.header("Overlay display")
+        st.write("Proteins to show")
+        select_all_col, deselect_all_col = st.columns(2)
+        if select_all_col.button("Select all", width="stretch"):
+            for label in labels:
+                st.session_state[f"show_prot_{label}"] = True
+        if deselect_all_col.button("Deselect all", width="stretch"):
+            for label in labels:
+                st.session_state[f"show_prot_{label}"] = False
+        for label in labels:
+            st.checkbox(label, value=True, key=f"show_prot_{label}")
+        selected = [label for label in labels if st.session_state[f"show_prot_{label}"]]
+        show_pocket = st.checkbox("Highlight reference pocket residues", value=True)
+
+        if "camera_generation" not in st.session_state:
+            st.session_state.camera_generation = 0
+        if st.button("Reset view"):
+            st.session_state.camera_generation += 1
+
+    candidates_path = Path(report_dir) / "candidates.json"
+    tab_names = ["Overview", "Active-site comparison", "Structure overlay"]
+    if candidates_path.exists():
+        tab_names.append("Candidates")
+    tabs = st.tabs(tab_names)
+
+    with tabs[0]:
+        summary = dashboard.overview_dataframe(report)
+        st.dataframe(summary, width="stretch", height=(len(summary) + 1) * 35 + 3, hide_index=True)
+
+    with tabs[1]:
+        st.caption(
+            "Every reference pocket residue, mapped onto each protein's own numbering. "
+            "Color: green = identical, yellow = conservative substitution, red = non-conservative, gray = no counterpart (gap)."
+        )
+        values_df, cons_df = dashboard.pocket_comparison_frames(report)
+
+        def _apply_colors(_df):
+            return cons_df.map(lambda v: f"background-color: {CONSERVATION_COLORS.get(v, '')}")
+
+        st.dataframe(values_df.style.apply(_apply_colors, axis=None), width="stretch", height=(len(values_df) + 1) * 35 + 3)
+
+    with tabs[2]:
+        by_label = {p["accession"]: p for p in proteins}
+        scene_structures = []
+        for label in selected:
+            p = by_label[label]
+            if not p.get("aligned_pdb"):
+                continue  # skipped during structural alignment (see p.get("align_error"))
+            site = None
+            if show_pocket:
+                site = [c["target_position"] for c in p["pocket_comparison"] if c["target_position"] is not None]
+            scene_structures.append(
+                {"label": label, "pdb_path": p["aligned_pdb"], "chain_id": p["chain"], "site_resseqs": site}
+            )
+        if not scene_structures:
+            st.info("No selected protein has a superposed coordinate file to show (all skipped during structural alignment?).")
+        else:
+            view = scene.build_overlay_view(scene_structures, reference_label=reference)
+            html = html_with_camera_events(view._make_html())
+            view3d(html, height=650, reset_camera_token=st.session_state.camera_generation)
+
+        skipped = [p for p in proteins if p["accession"] in selected and not p.get("aligned_pdb")]
+        if skipped:
+            st.warning(
+                "Not shown (couldn't be structurally superposed): "
+                + ", ".join(f"{p['accession']} ({p['align_error']})" for p in skipped)
+            )
+
+    if candidates_path.exists():
+        with tabs[3]:
+            candidates_report = _load_json(str(candidates_path))
+            st.caption(
+                f"Seed: {candidates_report['seed_accession']} ({candidates_report['seed_name']}) -- "
+                f"family {candidates_report['family_database']}:{candidates_report['family_id']} "
+                f"({candidates_report['family_entry_name']}, {candidates_report['family_member_count']} member(s))"
+            )
+            cand_df = dashboard.candidates_dataframe(candidates_report)
+            st.dataframe(cand_df, width="stretch", height=(len(cand_df) + 1) * 35 + 3, hide_index=True)
+
+
+if __name__ == "__main__":
+    main()

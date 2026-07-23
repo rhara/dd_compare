@@ -1,0 +1,53 @@
+"""Pandas DataFrame construction for the Streamlit Overview / Active-site
+comparison tabs (`app.py`)."""
+from __future__ import annotations
+
+from typing import Tuple
+
+import pandas as pd
+
+
+def overview_dataframe(report: dict) -> pd.DataFrame:
+    reference = report["reference"]
+    rows = []
+    for p in report["proteins"]:
+        rows.append(
+            {
+                "Accession": p["accession"],
+                "Name": p["name"],
+                "Length": p["length"],
+                "% identity to reference": "(reference)" if p["accession"] == reference else round(p["pct_identity"], 1),
+                "RMSD to reference (Å)": round(p["rmsd"], 3) if p["rmsd"] is not None else None,
+                "Note": p["align_error"] or "",
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def pocket_comparison_frames(report: dict) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Two same-shape DataFrames (one row per reference pocket residue, one
+    column per protein): `values` (display string, e.g. `"Y81"` or `"-"`
+    for no counterpart) and `conservation` (the raw category, used to color
+    `values`'s cells in the Streamlit app -- see `app.py`'s `CONSERVATION_COLORS`)."""
+    proteins = report["proteins"]
+    row_labels = [f"{c['reference_residue']}{c['reference_position']}" for c in proteins[0]["pocket_comparison"]]
+
+    values = {}
+    conservation = {}
+    for p in proteins:
+        col = f"{p['accession']} ({p['name']})"
+        values[col] = [
+            f"{c['target_residue']}{c['target_position']}" if c["target_residue"] else "-"
+            for c in p["pocket_comparison"]
+        ]
+        conservation[col] = [c["conservation"] for c in p["pocket_comparison"]]
+
+    return pd.DataFrame(values, index=row_labels), pd.DataFrame(conservation, index=row_labels)
+
+
+def candidates_dataframe(candidates_report: dict) -> pd.DataFrame:
+    rows = [
+        {"Accession": c["accession"], "Name": c["name"], "Length": c["length"], "% identity to seed": round(c["pct_identity"], 1)}
+        for c in candidates_report["candidates"]
+    ]
+    return pd.DataFrame(rows)

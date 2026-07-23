@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+*.html
+!dd_compare/viewer3d/frontend/*.html
+.pytest_cache/
+
+data/*
+!data/example_cdk20_cdk2_mak/
+# fpocket's own scratch working directory (dozens of per-pocket candidate
+# files) -- fully regenerable via `dd_compare-align`; the pocket actually
+# selected is already captured in report.json's "pocket" field.
+data/example_cdk20_cdk2_mak/pocket/

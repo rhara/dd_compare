@@ -1,0 +1,588 @@
+{
+  "reference": "Q8IZL9",
+  "pocket": {
+    "receptor_pdb": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/Q8IZL9_AFDB.pdb",
+    "fpocket_id": 21,
+    "rank": 1,
+    "score": -0.166,
+    "druggability_score": 0.646,
+    "n_alpha_spheres": 95,
+    "volume": 822.946,
+    "residues": [
+      "A:10",
+      "A:11",
+      "A:12",
+      "A:13",
+      "A:14",
+      "A:15",
+      "A:18",
+      "A:31",
+      "A:33",
+      "A:51",
+      "A:65",
+      "A:81",
+      "A:82",
+      "A:84",
+      "A:127",
+      "A:129",
+      "A:131",
+      "A:132",
+      "A:134",
+      "A:144",
+      "A:145",
+      "A:147",
+      "A:148",
+      "A:305"
+    ],
+    "center": [
+      -2.965863157894737,
+      5.493905263157895,
+      11.234894736842106
+    ]
+  },
+  "proteins": [
+    {
+      "accession": "Q8IZL9",
+      "name": "Cyclin-dependent kinase 20",
+      "length": 346,
+      "pct_identity": 100.0,
+      "rmsd": 0.0,
+      "n_aligned_atoms": 0,
+      "chain": "A",
+      "aligned_pdb": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned/Q8IZL9_aligned.pdb",
+      "align_error": null,
+      "pocket_comparison": [
+        {
+          "reference_position": 10,
+          "reference_residue": "I",
+          "target_position": 10,
+          "target_residue": "I",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 11,
+          "reference_residue": "G",
+          "target_position": 11,
+          "target_residue": "G",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 12,
+          "reference_residue": "E",
+          "target_position": 12,
+          "target_residue": "E",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 13,
+          "reference_residue": "G",
+          "target_position": 13,
+          "target_residue": "G",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 14,
+          "reference_residue": "A",
+          "target_position": 14,
+          "target_residue": "A",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 15,
+          "reference_residue": "H",
+          "target_position": 15,
+          "target_residue": "H",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 18,
+          "reference_residue": "V",
+          "target_position": 18,
+          "target_residue": "V",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 31,
+          "reference_residue": "A",
+          "target_position": 31,
+          "target_residue": "A",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 33,
+          "reference_residue": "K",
+          "target_position": 33,
+          "target_residue": "K",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 51,
+          "reference_residue": "E",
+          "target_position": 51,
+          "target_residue": "E",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 65,
+          "reference_residue": "V",
+          "target_position": 65,
+          "target_residue": "V",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 81,
+          "reference_residue": "F",
+          "target_position": 81,
+          "target_residue": "F",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 82,
+          "reference_residue": "E",
+          "target_position": 82,
+          "target_residue": "E",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 84,
+          "reference_residue": "M",
+          "target_position": 84,
+          "target_residue": "M",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 127,
+          "reference_residue": "D",
+          "target_position": 127,
+          "target_residue": "D",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 129,
+          "reference_residue": "K",
+          "target_position": 129,
+          "target_residue": "K",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 131,
+          "reference_residue": "A",
+          "target_position": 131,
+          "target_residue": "A",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 132,
+          "reference_residue": "N",
+          "target_position": 132,
+          "target_residue": "N",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 134,
+          "reference_residue": "L",
+          "target_position": 134,
+          "target_residue": "L",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 144,
+          "reference_residue": "A",
+          "target_position": 144,
+          "target_residue": "A",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 145,
+          "reference_residue": "D",
+          "target_position": 145,
+          "target_residue": "D",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 147,
+          "reference_residue": "G",
+          "target_position": 147,
+          "target_residue": "G",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 148,
+          "reference_residue": "L",
+          "target_position": 148,
+          "target_residue": "L",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 305,
+          "reference_residue": "R",
+          "target_position": 305,
+          "target_residue": "R",
+          "conservation": "identical"
+        }
+      ]
+    },
+    {
+      "accession": "P24941",
+      "name": "Cyclin-dependent kinase 2",
+      "length": 298,
+      "pct_identity": 44.10774410774411,
+      "rmsd": 3.3868347282980604,
+      "n_aligned_atoms": 264,
+      "chain": "A",
+      "aligned_pdb": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned/P24941_aligned.pdb",
+      "align_error": null,
+      "pocket_comparison": [
+        {
+          "reference_position": 10,
+          "reference_residue": "I",
+          "target_position": 10,
+          "target_residue": "I",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 11,
+          "reference_residue": "G",
+          "target_position": 11,
+          "target_residue": "G",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 12,
+          "reference_residue": "E",
+          "target_position": 12,
+          "target_residue": "E",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 13,
+          "reference_residue": "G",
+          "target_position": 13,
+          "target_residue": "G",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 14,
+          "reference_residue": "A",
+          "target_position": 14,
+          "target_residue": "T",
+          "conservation": "non-conservative"
+        },
+        {
+          "reference_position": 15,
+          "reference_residue": "H",
+          "target_position": 15,
+          "target_residue": "Y",
+          "conservation": "conservative"
+        },
+        {
+          "reference_position": 18,
+          "reference_residue": "V",
+          "target_position": 18,
+          "target_residue": "V",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 31,
+          "reference_residue": "A",
+          "target_position": 31,
+          "target_residue": "A",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 33,
+          "reference_residue": "K",
+          "target_position": 33,
+          "target_residue": "K",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 51,
+          "reference_residue": "E",
+          "target_position": 51,
+          "target_residue": "E",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 65,
+          "reference_residue": "V",
+          "target_position": 64,
+          "target_residue": "V",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 81,
+          "reference_residue": "F",
+          "target_position": 80,
+          "target_residue": "F",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 82,
+          "reference_residue": "E",
+          "target_position": 81,
+          "target_residue": "E",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 84,
+          "reference_residue": "M",
+          "target_position": 83,
+          "target_residue": "L",
+          "conservation": "conservative"
+        },
+        {
+          "reference_position": 127,
+          "reference_residue": "D",
+          "target_position": 127,
+          "target_residue": "D",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 129,
+          "reference_residue": "K",
+          "target_position": 129,
+          "target_residue": "K",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 131,
+          "reference_residue": "A",
+          "target_position": 131,
+          "target_residue": "Q",
+          "conservation": "non-conservative"
+        },
+        {
+          "reference_position": 132,
+          "reference_residue": "N",
+          "target_position": 132,
+          "target_residue": "N",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 134,
+          "reference_residue": "L",
+          "target_position": 134,
+          "target_residue": "L",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 144,
+          "reference_residue": "A",
+          "target_position": 144,
+          "target_residue": "A",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 145,
+          "reference_residue": "D",
+          "target_position": 145,
+          "target_residue": "D",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 147,
+          "reference_residue": "G",
+          "target_position": 147,
+          "target_residue": "G",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 148,
+          "reference_residue": "L",
+          "target_position": 148,
+          "target_residue": "L",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 305,
+          "reference_residue": "R",
+          "target_position": null,
+          "target_residue": null,
+          "conservation": "gap"
+        }
+      ]
+    },
+    {
+      "accession": "P20794",
+      "name": "Serine/threonine-protein kinase MAK",
+      "length": 623,
+      "pct_identity": 36.54970760233918,
+      "rmsd": 2.5314280599089845,
+      "n_aligned_atoms": 288,
+      "chain": "A",
+      "aligned_pdb": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned/P20794_aligned.pdb",
+      "align_error": null,
+      "pocket_comparison": [
+        {
+          "reference_position": 10,
+          "reference_residue": "I",
+          "target_position": 10,
+          "target_residue": "L",
+          "conservation": "conservative"
+        },
+        {
+          "reference_position": 11,
+          "reference_residue": "G",
+          "target_position": 11,
+          "target_residue": "G",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 12,
+          "reference_residue": "E",
+          "target_position": 12,
+          "target_residue": "D",
+          "conservation": "conservative"
+        },
+        {
+          "reference_position": 13,
+          "reference_residue": "G",
+          "target_position": 13,
+          "target_residue": "G",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 14,
+          "reference_residue": "A",
+          "target_position": 14,
+          "target_residue": "T",
+          "conservation": "non-conservative"
+        },
+        {
+          "reference_position": 15,
+          "reference_residue": "H",
+          "target_position": 15,
+          "target_residue": "Y",
+          "conservation": "conservative"
+        },
+        {
+          "reference_position": 18,
+          "reference_residue": "V",
+          "target_position": 18,
+          "target_residue": "V",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 31,
+          "reference_residue": "A",
+          "target_position": 31,
+          "target_residue": "A",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 33,
+          "reference_residue": "K",
+          "target_position": 33,
+          "target_residue": "K",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 51,
+          "reference_residue": "E",
+          "target_position": 50,
+          "target_residue": "E",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 65,
+          "reference_residue": "V",
+          "target_position": 63,
+          "target_residue": "I",
+          "conservation": "conservative"
+        },
+        {
+          "reference_position": 81,
+          "reference_residue": "F",
+          "target_position": 79,
+          "target_residue": "F",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 82,
+          "reference_residue": "E",
+          "target_position": 80,
+          "target_residue": "E",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 84,
+          "reference_residue": "M",
+          "target_position": 82,
+          "target_residue": "M",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 127,
+          "reference_residue": "D",
+          "target_position": 125,
+          "target_residue": "D",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 129,
+          "reference_residue": "K",
+          "target_position": 127,
+          "target_residue": "K",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 131,
+          "reference_residue": "A",
+          "target_position": 129,
+          "target_residue": "E",
+          "conservation": "non-conservative"
+        },
+        {
+          "reference_position": 132,
+          "reference_residue": "N",
+          "target_position": 130,
+          "target_residue": "N",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 134,
+          "reference_residue": "L",
+          "target_position": 132,
+          "target_residue": "L",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 144,
+          "reference_residue": "A",
+          "target_position": 142,
+          "target_residue": "A",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 145,
+          "reference_residue": "D",
+          "target_position": 143,
+          "target_residue": "D",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 147,
+          "reference_residue": "G",
+          "target_position": 145,
+          "target_residue": "G",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 148,
+          "reference_residue": "L",
+          "target_position": 146,
+          "target_residue": "L",
+          "conservation": "identical"
+        },
+        {
+          "reference_position": 305,
+          "reference_residue": "R",
+          "target_position": 331,
+          "target_residue": "V",
+          "conservation": "non-conservative"
+        }
+      ]
+    }
+  ]
+}

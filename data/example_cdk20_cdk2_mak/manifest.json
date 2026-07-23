@@ -1,0 +1,25 @@
+{
+  "proteins": [
+    {
+      "accession": "Q8IZL9",
+      "name": "Cyclin-dependent kinase 20",
+      "length": 346,
+      "fasta_path": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/Q8IZL9.fasta",
+      "afdb_path": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/Q8IZL9_AFDB.pdb"
+    },
+    {
+      "accession": "P24941",
+      "name": "Cyclin-dependent kinase 2",
+      "length": 298,
+      "fasta_path": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/P24941.fasta",
+      "afdb_path": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/P24941_AFDB.pdb"
+    },
+    {
+      "accession": "P20794",
+      "name": "Serine/threonine-protein kinase MAK",
+      "length": 623,
+      "fasta_path": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/P20794.fasta",
+      "afdb_path": "/Users/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/raw/P20794_AFDB.pdb"
+    }
+  ]
+}
