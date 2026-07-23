@@ -85,7 +85,7 @@ def discover(
 
 def analyze(
     out_dir: Union[str, Path], *, reference: Optional[str] = None, pocket_rank: int = 1, show_progress: bool = True,
-    pdb_overlay: bool = True, pdb_scan_cap: int = 25,
+    pdb_overlay: bool = True, pdb_scan_cap: int = 25, pdb_max_structures: int = 3,
 ) -> dict:
     """Run pocket detection + cross-protein alignment + structural overlay
     across every protein `fetch_all` downloaded into `out_dir`. `reference`
@@ -151,39 +151,37 @@ def analyze(
         )
     }
 
-    pdb_overlay_results: Dict[str, pdbstruct.PdbOverlayResult] = {}
-    pdb_selections: Dict[str, pdbstruct.SelectedPdbStructure] = {}
+    pdb_overlay_results: Dict[str, List[pdbstruct.PdbOverlayResult]] = {}
+    pdb_selections: Dict[str, List[pdbstruct.SelectedPdbStructure]] = {}
     if pdb_overlay:
         for acc in proteins:
             try:
-                sel = pdbstruct.select_pdb_structure(
-                    acc, canonical_by_acc[acc], out_dir / "raw_pdb", scan_cap=pdb_scan_cap, show_progress=show_progress,
+                pdb_selections[acc] = pdbstruct.select_pdb_structures(
+                    acc, canonical_by_acc[acc], out_dir / "raw_pdb", scan_cap=pdb_scan_cap,
+                    max_structures=pdb_max_structures, show_progress=show_progress,
                 )
             except Exception as e:
                 if show_progress:
                     print(f"[pdb-overlay] {acc}: lookup failed ({e}), skipping", flush=True)
-                continue
-            if sel is not None:
-                pdb_selections[acc] = sel
+                pdb_selections[acc] = []
         pdb_overlay_results = pdbstruct.align_pdb_overlays(
             proteins[reference]["afdb_path"], reference, pdb_selections,
             out_dir / "aligned_pdb", show_progress=show_progress,
         )
 
-    def _pdb_report(acc: str) -> Optional[dict]:
-        r = pdb_overlay_results.get(acc)
-        if r is None:
-            return None
-        sel = pdb_selections[acc]
-        pocket_resseq = {
-            c.target_position: sel.chain_alignment.resseq_for_canonical(c.target_position)
-            for c in comparisons_by_acc[acc] if c.target_position is not None
-        }
-        return {
-            "pdb_id": r.pdb_id, "resolution": r.resolution, "ligand_resname": r.ligand_resname,
-            "chain": r.chain_id, "aligned_pdb": r.aligned_pdb, "rmsd": r.rmsd,
-            "n_aligned_atoms": r.n_aligned_atoms, "error": r.error, "pocket_resseq": pocket_resseq,
-        }
+    def _pdb_report(acc: str) -> list:
+        out = []
+        for sel, r in zip(pdb_selections.get(acc, []), pdb_overlay_results.get(acc, [])):
+            pocket_resseq = {
+                c.target_position: sel.chain_alignment.resseq_for_canonical(c.target_position)
+                for c in comparisons_by_acc[acc] if c.target_position is not None
+            }
+            out.append({
+                "pdb_id": r.pdb_id, "resolution": r.resolution, "ligand_resname": r.ligand_resname,
+                "chain": r.chain_id, "aligned_pdb": r.aligned_pdb, "rmsd": r.rmsd,
+                "n_aligned_atoms": r.n_aligned_atoms, "error": r.error, "pocket_resseq": pocket_resseq,
+            })
+        return out
 
     report = {
         "reference": reference,
@@ -200,7 +198,7 @@ def analyze(
                 "aligned_pdb": align_results[acc].aligned_pdb,
                 "align_error": align_results[acc].error,
                 "pocket_comparison": [c.__dict__ for c in comparisons_by_acc[acc]],
-                "pdb": _pdb_report(acc),
+                "pdb_structures": _pdb_report(acc),
             }
             for acc, info in proteins.items()
         ],

@@ -52,7 +52,7 @@ def list_pdb_ids_for_uniprot(accession: str) -> List[str]:
     """Every RCSB PDB entry ID cross-referenced (via SIFTS) to this UniProt
     accession, best-resolution-first (server-side sort) -- a well-studied
     target can have hundreds of entries (e.g. CDK2's 512), and sorting on
-    RCSB's side means `select_pdb_structure` only needs to fetch per-entry
+    RCSB's side means `select_pdb_structures` only needs to fetch per-entry
     metadata/coordinates for as many of them as it actually scans, instead
     of every one just to rank them."""
     query = {
@@ -240,30 +240,37 @@ class SelectedPdbStructure:
     n_candidates_scanned: int
 
 
-def select_pdb_structure(
+def select_pdb_structures(
     accession: str, canonical_seq: str, out_dir: Union[str, Path], *,
-    scan_cap: int = 25, min_ligand_atoms: int = 5, show_progress: bool = True,
-) -> Optional[SelectedPdbStructure]:
-    """Pick one real PDB structure for `accession`, preferring one with a
-    genuine bound ligand (not water/cryoprotectant/cofactor -- see
-    `pdbio.classify_hetero_groups`) and, among those, the best resolution;
-    falling back to the best-resolution entry overall if none of the
-    (resolution-sorted) first `scan_cap` candidates has one. Returns None if
-    the accession has no RCSB structures at all. Candidates are scanned
-    cheapest-metadata-first and downloaded/parsed for ligand content only up
-    to `scan_cap` of them, since a well-studied target (e.g. CDK2's 512
-    entries) would otherwise mean downloading hundreds of structures just to
-    pick one."""
+    scan_cap: int = 25, min_ligand_atoms: int = 5, max_structures: int = 3, show_progress: bool = True,
+) -> List["SelectedPdbStructure"]:
+    """Pick up to `max_structures` real PDB structures for `accession`,
+    preferring ones with a genuine bound ligand (not water/cryoprotectant/
+    cofactor -- see `pdbio.classify_hetero_groups`), one per *distinct*
+    ligand (deduplicated by resname, resolution-ranked-first-seen wins) so
+    a target crystallized many times with the same fragment doesn't crowd
+    out other chemical matter. Falls back to a single best-resolution entry
+    overall if none of the (resolution-sorted) first `scan_cap` candidates
+    has a ligand at all. Returns `[]` if the accession has no RCSB
+    structures. Candidates are scanned cheapest-metadata-first and
+    downloaded/parsed for ligand content only as needed, stopping once
+    `max_structures` distinct ligands are found or `scan_cap` candidates
+    have been scanned -- a well-studied target (e.g. CDK2's 512 entries)
+    would otherwise mean downloading hundreds of structures."""
     out_dir = Path(out_dir)
     pdb_ids = list_pdb_ids_for_uniprot(accession)  # already best-resolution-first (server-side sort)
     if not pdb_ids:
         if show_progress:
             print(f"[pdbstruct] {accession}: no RCSB structures found", flush=True)
-        return None
+        return []
 
+    selections: List[SelectedPdbStructure] = []
+    seen_ligands: set = set()
     best_apo: Optional[Tuple[EntryMetadata, str]] = None
     scanned = 0
     for pdb_id in pdb_ids[:scan_cap]:
+        if len(selections) >= max_structures:
+            break
         scanned += 1
         try:
             meta = fetch_entry_metadata(pdb_id)
@@ -277,26 +284,33 @@ def select_pdb_structure(
         groups = pdbio.classify_hetero_groups(pdbio.collect_hetero_groups(text))
         ligand = pdbio.pick_ligand_of_interest(groups, min_atoms=min_ligand_atoms)
         if ligand is not None:
+            if ligand.resname in seen_ligands:
+                continue  # already have this ligand from a better-resolution entry; prefer diversity
+            seen_ligands.add(ligand.resname)
+            selections.append(_finalize_selection(accession, meta, dest, canonical_seq, ligand.resname, scanned))
             if show_progress:
                 print(
                     f"[pdbstruct] {accession}: picked {meta.pdb_id} (resolution={meta.resolution}, "
-                    f"ligand={ligand.resname}) after scanning {scanned} candidate(s)", flush=True,
+                    f"ligand={ligand.resname}) [{len(selections)}/{max_structures}] after scanning "
+                    f"{scanned} candidate(s)", flush=True,
                 )
-            return _finalize_selection(accession, meta, dest, canonical_seq, ligand.resname, scanned)
+            continue
         if best_apo is None:
             best_apo = (meta, str(dest))
 
+    if selections:
+        return selections
     if best_apo is None:
         if show_progress:
             print(f"[pdbstruct] {accession}: {scanned} candidate(s) scanned, none downloadable", flush=True)
-        return None
+        return []
     meta, dest = best_apo
     if show_progress:
         print(
             f"[pdbstruct] {accession}: no ligand-bound entry among {scanned} scanned candidate(s), "
             f"falling back to best resolution {meta.pdb_id} ({meta.resolution})", flush=True,
         )
-    return _finalize_selection(accession, meta, Path(dest), canonical_seq, None, scanned)
+    return [_finalize_selection(accession, meta, Path(dest), canonical_seq, None, scanned)]
 
 
 def _finalize_selection(
@@ -327,41 +341,48 @@ class PdbOverlayResult:
 
 
 def align_pdb_overlays(
-    reference_afdb_path: Union[str, Path], reference_label: str, selections: Dict[str, SelectedPdbStructure],
-    out_dir: Union[str, Path], *, show_progress: bool = True,
-) -> Dict[str, PdbOverlayResult]:
-    """Superpose every protein's selected real PDB structure (`selections`,
-    keyed by accession -- proteins with no RCSB structure are simply absent)
-    onto the reference protein's AlphaFold-model frame via whole-chain
-    `cealign`, reusing `structalign.align_structures` unmodified (it doesn't
-    care whether an input is an AlphaFold model or a real structure). The
-    reference's own AFDB file is the fixed anchor; if the reference protein
-    itself has a selected PDB structure too, that gets cealigned onto its
-    own AFDB model just like every other protein's does -- a real PDB
-    entry's coordinate frame has no relation to AlphaFold's, even for the
-    same protein, so it still needs its own fit."""
+    reference_afdb_path: Union[str, Path], reference_label: str,
+    selections: Dict[str, List[SelectedPdbStructure]], out_dir: Union[str, Path], *, show_progress: bool = True,
+) -> Dict[str, List[PdbOverlayResult]]:
+    """Superpose every protein's selected real PDB structure(s) (`selections`,
+    keyed by accession -- proteins with no RCSB structure are simply absent
+    or map to an empty list) onto the reference protein's AlphaFold-model
+    frame via whole-chain `cealign`, reusing `structalign.align_structures`
+    unmodified (it doesn't care whether an input is an AlphaFold model or a
+    real structure). The reference's own AFDB file is the fixed anchor; if
+    the reference protein itself has selected PDB structure(s) too, those
+    get cealigned onto its own AFDB model just like every other protein's
+    does -- a real PDB entry's coordinate frame has no relation to
+    AlphaFold's, even for the same protein, so each still needs its own
+    fit. Each structure gets a unique `structalign` label
+    (`f"{acc}_pdb{i}"`) so multiple entries for the same protein don't
+    collide, and so `structalign`'s output filenames stay distinct."""
     from . import structalign
 
-    if not selections:
-        return {}
+    if not any(selections.values()):
+        return {acc: [] for acc in selections}
 
     anchor = structalign.StructureInput(label=reference_label, pdb_path=str(reference_afdb_path), chain_id="A")
     mobiles = [
-        structalign.StructureInput(label=f"{acc}_pdb", pdb_path=sel.pdb_path, chain_id=sel.chain_id)
-        for acc, sel in selections.items()
+        structalign.StructureInput(label=f"{acc}_pdb{i}", pdb_path=sel.pdb_path, chain_id=sel.chain_id)
+        for acc, sels in selections.items() for i, sel in enumerate(sels)
     ]
     results = structalign.align_structures(
         [anchor] + mobiles, reference_label=reference_label, out_dir=out_dir, show_progress=show_progress,
     )
     by_label = {r.label: r for r in results}
 
-    out: Dict[str, PdbOverlayResult] = {}
-    for acc, sel in selections.items():
-        r = by_label.get(f"{acc}_pdb")
-        if r is None:
-            continue
-        out[acc] = PdbOverlayResult(
-            accession=acc, pdb_id=sel.pdb_id, resolution=sel.resolution, ligand_resname=sel.ligand_resname,
-            chain_id=sel.chain_id, aligned_pdb=r.aligned_pdb, rmsd=r.rmsd, n_aligned_atoms=r.n_atoms, error=r.error,
-        )
+    out: Dict[str, List[PdbOverlayResult]] = {}
+    for acc, sels in selections.items():
+        entries = []
+        for i, sel in enumerate(sels):
+            r = by_label.get(f"{acc}_pdb{i}")
+            if r is None:
+                continue
+            entries.append(PdbOverlayResult(
+                accession=acc, pdb_id=sel.pdb_id, resolution=sel.resolution, ligand_resname=sel.ligand_resname,
+                chain_id=sel.chain_id, aligned_pdb=r.aligned_pdb, rmsd=r.rmsd, n_aligned_atoms=r.n_atoms,
+                error=r.error,
+            ))
+        out[acc] = entries
     return out

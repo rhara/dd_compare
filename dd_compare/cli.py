@@ -39,16 +39,22 @@ def _add_align_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--pocket-rank", type=int, default=1, help="Druggability-ranked pocket to use on the reference (default: 1, top-ranked)")
     parser.add_argument(
         "--no-pdb-overlay", action="store_true",
-        help="Skip looking up each protein's real RCSB structures. By default, when a protein has any, one "
-             "(preferring a ligand-bound entry, else best resolution) is fetched and superposed onto the "
-             "reference alongside its AlphaFold model, purely as an additional visual layer -- pocket detection "
-             "and the cross-protein sequence/pocket mapping always stay anchored on the AlphaFold model.",
+        help="Skip looking up each protein's real RCSB structures. By default, when a protein has any, up to "
+             "--pdb-max-structures of them (preferring distinct ligand-bound entries, else best resolution) are "
+             "fetched and superposed onto the reference alongside its AlphaFold model, purely as an additional "
+             "visual layer -- pocket detection and the cross-protein sequence/pocket mapping always stay anchored "
+             "on the AlphaFold model.",
+    )
+    parser.add_argument(
+        "--pdb-max-structures", type=int, default=3,
+        help="With PDB overlay enabled: how many distinct-ligand real structures to fetch per protein (default: 3).",
     )
     parser.add_argument(
         "--pdb-scan-cap", type=int, default=25,
         help="With PDB overlay enabled: how many resolution-ranked candidate structures to check for a bound "
-             "ligand before falling back to the best-resolution one (default: 25) -- caps network/download cost "
-             "for well-studied targets with hundreds of entries.",
+             "ligand, at most, before giving up on finding --pdb-max-structures of them and falling back to the "
+             "best-resolution one (default: 25) -- caps network/download cost for well-studied targets with "
+             "hundreds of entries.",
     )
     parser.add_argument("--no-progress", action="store_true", help="Suppress the one-line-per-item progress output")
 
@@ -101,7 +107,7 @@ def main_align(argv=None) -> None:
     args = build_align_parser().parse_args(argv)
     report = pipeline.analyze(
         args.out_dir, reference=args.reference, pocket_rank=args.pocket_rank, show_progress=not args.no_progress,
-        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap,
+        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap, pdb_max_structures=args.pdb_max_structures,
     )
     _print_report(report, args.out_dir)
 
@@ -113,7 +119,7 @@ def main_run(argv=None) -> None:
     pipeline.fetch_all(args.accessions, args.out_dir, show_progress=not args.no_progress)
     report = pipeline.analyze(
         args.out_dir, reference=args.reference, pocket_rank=args.pocket_rank, show_progress=not args.no_progress,
-        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap,
+        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap, pdb_max_structures=args.pdb_max_structures,
     )
     _print_report(report, args.out_dir)
 

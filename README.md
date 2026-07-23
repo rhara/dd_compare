@@ -50,11 +50,13 @@ is what gets translated across proteins.
   an optional text label per pocket residue -- toggle both the highlight
   and the labels from the sidebar, independent of which proteins are
   shown), Candidates (only shown if `candidates.json` exists in the report
-  directory -- the ranked output of a prior `--discover` run). When a
-  protein has a real RCSB structure (see "Real-structure overlay" below),
-  the sidebar's "Show real PDB structure when available" toggle draws it
-  as a second, semi-transparent layer alongside its AlphaFold model, with
-  any bound ligand rendered as sticks.
+  directory -- the ranked output of a prior `--discover` run). Every real
+  RCSB structure a protein has (see "Real-structure overlay" below) gets
+  its own checkbox, nested under that protein's own in the "Proteins to
+  show" sidebar list -- shown/hidden independently of its AlphaFold model
+  and of each other, drawn as a semi-transparent layer with its own bound
+  ligand as sticks, each ligand in its own distinct color (see the color
+  swatches in the caption above the 3D view).
 
 ## Worked example: CDK20 vs. CDK2 vs. MAK
 
@@ -75,11 +77,12 @@ pocket residues -- plus position 305 as an outright gap in CDK2 (whose
 canonical sequence, at 298 aa, is simply shorter than CDK20's 346).
 `data/example_cdk20_cdk2_mak/` is committed as a full worked example
 (fetched sequences/structures, `report.json`, superposed coordinates).
-CDK2 also has a real, ligand-bound RCSB structure (`6Q4G`, 0.98 Å, bound
-ligand `HJK`) picked automatically by the real-structure overlay (see
-below) -- the app draws it as a semi-transparent layer alongside CDK2's
-AlphaFold model, so the reference's mapped pocket residues can be checked
-against where a real ligand actually sits.
+CDK2 also has three real, ligand-bound RCSB structures (`6Q4G`/`HJK` 0.98 Å,
+`6Q49`/`HGQ` 1.00 Å, `6Q4H`/`HGH` 1.00 Å) picked automatically by the
+real-structure overlay (see below) -- the app draws each as its own
+semi-transparent layer alongside CDK2's AlphaFold model, in its own
+distinct color, so the reference's mapped pocket residues can be checked
+against where three different real, known ligands actually sit.
 
 ## Similar-protein discovery
 
@@ -134,9 +137,12 @@ onto. `--pocket-rank` (default 1, top-ranked by fpocket's Druggability
 Score) picks a different pocket on the reference if the top one isn't the
 site of interest. `--no-pdb-overlay` skips the real-RCSB-structure lookup
 described below (fetch/align only against AlphaFold models, as in earlier
-versions); `--pdb-scan-cap N` (default 25) caps how many resolution-ranked
-candidates get downloaded and checked for a bound ligand before falling
-back to best-resolution, for a target with hundreds of structures.
+versions); `--pdb-max-structures N` (default 3) caps how many distinct
+ligand-bound real structures are kept per protein; `--pdb-scan-cap N`
+(default 25) caps how many resolution-ranked candidates get downloaded and
+checked for a bound ligand, at most, before giving up on finding that many
+and falling back to the single best-resolution one, for a target with
+hundreds of structures.
 
 All commands print one line per completed item as it happens; pass
 `--no-progress` to suppress this and only print the final summary.
@@ -144,33 +150,39 @@ All commands print one line per completed item as it happens; pass
 ## Real-structure overlay
 
 `dd_compare-align`/`-run` also looks up, for every protein, whether it has
-any real RCSB structures and -- if so -- picks one (preferring an entry
-with a genuine bound ligand, not water/cryoprotectant/cofactor; among
-ligand-bound entries, or if none are, the best resolution) and superposes
-it onto the reference alongside that protein's AlphaFold model. This is
-purely an *additional* visualization layer: pocket detection and the
-cross-protein sequence/pocket mapping stay anchored on the AlphaFold model
-unconditionally, exactly as before -- see "Why always AlphaFold" below,
-which still holds for the actual comparison. `report.json` records the
-pick per protein (`pdb.pdb_id`, `.resolution`, `.ligand_resname`, ...); a
+any real RCSB structures and -- if so -- picks up to `--pdb-max-structures`
+of them, one per *distinct* bound ligand (not water/cryoprotectant/
+cofactor; the best-resolution entry for each ligand wins if the same
+ligand shows up in more than one candidate), falling back to a single
+best-resolution entry if none of the scanned candidates has a ligand at
+all -- and superposes each onto the reference alongside that protein's
+AlphaFold model. This is purely an *additional* visualization layer:
+pocket detection and the cross-protein sequence/pocket mapping stay
+anchored on the AlphaFold model unconditionally, exactly as before -- see
+"Why always AlphaFold" below, which still holds for the actual comparison.
+`report.json` records the picks per protein as a list,
+`pdb_structures: [{pdb_id, resolution, ligand_resname, ...}, ...]`; a
 protein with no RCSB structures at all (e.g. CDK20 itself) simply has
-`pdb: null`.
+`pdb_structures: []`.
 
 **Viewing it**: the committed CDK20/CDK2/MAK example already includes a
-real-structure overlay for CDK2 (`6Q4G`, 0.98 Å, bound ligand `HJK`) --
-no extra fetch needed, just open the app against it:
+real-structure overlay for CDK2 -- three distinct ligand-bound structures
+-- no extra fetch needed, just open the app against it:
 
 ```bash
 streamlit run app.py -- --report-dir data/example_cdk20_cdk2_mak
 ```
 
-Open the **Structure overlay** tab; with the sidebar's "Show real PDB
-structure when available" checkbox on (the default), CDK2's real
-structure is drawn as a second, semi-transparent layer on top of its
-AlphaFold model, with `HJK` shown as sticks -- a direct visual check of
-whether the reference's mapped pocket residues actually line up with
-where a real, known ligand sits. The caption above the 3D view names the
-PDB ID/resolution/ligand picked for each protein shown, and which
+Open the **Structure overlay** tab. In the sidebar's "Proteins to show"
+list, each real structure gets its own checkbox nested under its
+protein's (e.g. `↳ 6Q4G (HJK, 0.98Å)` under `P24941`), independent of that
+protein's own AlphaFold checkbox and of its other real structures -- check
+as many or as few as you want to compare at once. Each shown structure is
+drawn as a semi-transparent layer, with its bound ligand as sticks in its
+own distinct color (a colored swatch in the caption above the 3D view
+identifies which color is which PDB ID/ligand) -- a direct visual check of
+whether the reference's mapped pocket residues line up with where several
+different real, known ligands actually sit. The caption also names which
 proteins (CDK20, MAK) had no RCSB structure at all.
 
 ## Design notes
@@ -259,9 +271,12 @@ proteins (CDK20, MAK) had no RCSB structure at all.
   for the actual comparison (a deliberate choice, see "Design notes"
   above) -- induced-fit pocket changes upon ligand binding are out of
   scope there; the real-structure overlay is display-only.
-- **Real-structure overlay picks one entry per protein**, preferring a
-  ligand-bound one among the best-resolution `--pdb-scan-cap` candidates --
-  it does not scan every structure for a target with hundreds of them
-  (e.g. CDK2's 512), so a ligand-bound entry outside that scanned window
-  could be missed, and it does not show every ligand a target has ever
-  been crystallized with, just the one entry picked.
+- **Real-structure overlay picks up to `--pdb-max-structures` entries per
+  protein** (default 3, one per distinct bound ligand) among the
+  best-resolution `--pdb-scan-cap` candidates -- it does not scan every
+  structure for a target with hundreds of them (e.g. CDK2's 512), so a
+  ligand-bound entry outside that scanned window could be missed, and it
+  does not show every ligand a target has ever been crystallized with,
+  just the ones picked. Deduplication is by exact ligand resname, so two
+  genuinely different ligands that happen to share the same three-letter
+  RCSB code (rare, but not impossible) would be treated as one.

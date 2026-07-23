@@ -60,6 +60,8 @@ def main() -> None:
         f"pocket: {len(report['pocket']['residues'])} residue(s) (druggability={report['pocket']['druggability_score']:.2f})"
     )
 
+    by_label = {p["accession"]: p for p in proteins}
+
     with st.sidebar:
         st.header("Overlay display")
         st.write("Proteins to show")
@@ -67,19 +69,24 @@ def main() -> None:
         if select_all_col.button("Select all", width="stretch"):
             for label in labels:
                 st.session_state[f"show_prot_{label}"] = True
+                for i in range(len(by_label[label].get("pdb_structures") or [])):
+                    st.session_state[f"show_pdb_{label}_{i}"] = True
         if deselect_all_col.button("Deselect all", width="stretch"):
             for label in labels:
                 st.session_state[f"show_prot_{label}"] = False
+                for i in range(len(by_label[label].get("pdb_structures") or [])):
+                    st.session_state[f"show_pdb_{label}_{i}"] = False
         for label in labels:
             st.checkbox(label, value=True, key=f"show_prot_{label}")
+            for i, pdb in enumerate(by_label[label].get("pdb_structures") or []):
+                ligand_note = pdb.get("ligand_resname") or "apo"
+                res_note = f"{pdb['resolution']:.2f}Å" if pdb.get("resolution") is not None else "n/a"
+                st.checkbox(
+                    f"↳ {pdb['pdb_id']} ({ligand_note}, {res_note})", value=True, key=f"show_pdb_{label}_{i}",
+                )
         selected = [label for label in labels if st.session_state[f"show_prot_{label}"]]
         show_pocket = st.checkbox("Highlight reference pocket residues", value=True)
         label_residues = st.checkbox("Show residue labels", value=True, disabled=not show_pocket)
-        show_pdb_overlay = st.checkbox(
-            "Show real PDB structure when available", value=True,
-            help="Semi-transparent overlay of each protein's own best-matching RCSB structure "
-                 "(preferring one with a bound ligand), superposed onto the reference alongside its AlphaFold model.",
-        )
 
         if "camera_generation" not in st.session_state:
             st.session_state.camera_generation = 0
@@ -109,51 +116,70 @@ def main() -> None:
         st.dataframe(values_df.style.apply(_apply_colors, axis=None), width="stretch", height=(len(values_df) + 1) * 35 + 3)
 
     with tabs[2]:
-        by_label = {p["accession"]: p for p in proteins}
+        # Canonical-position pocket labels ("K33") per protein, computed once
+        # regardless of AFDB/PDB checkbox state -- a real-PDB checkbox can be
+        # checked independently of that protein's own AlphaFold checkbox.
+        canon_site_labels_by_label = {}
+        if show_pocket:
+            for label in labels:
+                covered = [c for c in by_label[label]["pocket_comparison"] if c["target_position"] is not None]
+                canon_site_labels_by_label[label] = {
+                    c["target_position"]: f"{c['target_residue']}{c['target_position']}" for c in covered
+                }
+
+        all_pdb_entries = [
+            (label, i, pdb) for label in labels for i, pdb in enumerate(by_label[label].get("pdb_structures") or [])
+        ]
+        ligand_colors = scene.assign_ligand_colors([f"{label}:{pdb['pdb_id']}" for label, i, pdb in all_pdb_entries])
+
         scene_structures = []
-        pdb_caption_lines = []
-        no_pdb_labels = []
         for label in selected:
             p = by_label[label]
             if not p.get("aligned_pdb"):
                 continue  # skipped during structural alignment (see p.get("align_error"))
-            site = None
-            site_labels = None
-            if show_pocket:
-                covered = [c for c in p["pocket_comparison"] if c["target_position"] is not None]
-                site = [c["target_position"] for c in covered]
-                site_labels = {c["target_position"]: f"{c['target_residue']}{c['target_position']}" for c in covered}
-
-            structure_entry = {
+            site_labels = canon_site_labels_by_label.get(label)
+            site = list(site_labels) if site_labels is not None else None
+            scene_structures.append({
                 "label": label, "pdb_path": p["aligned_pdb"], "chain_id": p["chain"],
-                "site_resseqs": site, "site_labels": site_labels,
-            }
+                "site_resseqs": site, "site_labels": site_labels, "kind": "afdb",
+            })
 
-            pdb = p.get("pdb")
-            if pdb is None:
-                no_pdb_labels.append(label)
-            elif show_pdb_overlay and pdb.get("aligned_pdb"):
-                pdb_site, pdb_site_labels = None, None
-                if show_pocket:
-                    pdb_site, pdb_site_labels = [], {}
-                    for canon_str, pdb_resseq in (pdb.get("pocket_resseq") or {}).items():
-                        if pdb_resseq is None:
-                            continue
-                        pdb_site.append(pdb_resseq)
-                        pdb_site_labels[pdb_resseq] = (site_labels or {}).get(int(canon_str), canon_str)
-                structure_entry["pdb_overlay"] = {
-                    "pdb_path": pdb["aligned_pdb"], "chain_id": pdb["chain"],
-                    "site_resseqs": pdb_site, "site_labels": pdb_site_labels,
-                    "ligand_resname": pdb.get("ligand_resname"),
-                }
-                ligand_note = f", ligand {pdb['ligand_resname']}" if pdb.get("ligand_resname") else " (apo)"
-                res_note = f"{pdb['resolution']:.2f}Å" if pdb.get("resolution") is not None else "resolution n/a"
-                pdb_caption_lines.append(f"{label}: PDB {pdb['pdb_id']} ({res_note}{ligand_note})")
+        pdb_caption_lines = []
+        for label, i, pdb in all_pdb_entries:
+            if not st.session_state.get(f"show_pdb_{label}_{i}", True) or not pdb.get("aligned_pdb"):
+                continue
+            pdb_site, pdb_site_labels = None, None
+            if show_pocket:
+                site_labels = canon_site_labels_by_label.get(label) or {}
+                pdb_site, pdb_site_labels = [], {}
+                for canon_str, pdb_resseq in (pdb.get("pocket_resseq") or {}).items():
+                    if pdb_resseq is None:
+                        continue
+                    pdb_site.append(pdb_resseq)
+                    pdb_site_labels[pdb_resseq] = site_labels.get(int(canon_str), canon_str)
+            ligand_color = ligand_colors.get(f"{label}:{pdb['pdb_id']}")
+            scene_structures.append({
+                "label": label, "pdb_path": pdb["aligned_pdb"], "chain_id": pdb["chain"], "kind": "pdb",
+                "site_resseqs": pdb_site, "site_labels": pdb_site_labels,
+                "ligand_resname": pdb.get("ligand_resname"), "ligand_color": ligand_color,
+            })
+            ligand_note = f"ligand {pdb['ligand_resname']}" if pdb.get("ligand_resname") else "apo"
+            res_note = f"{pdb['resolution']:.2f}Å" if pdb.get("resolution") is not None else "resolution n/a"
+            swatch = (
+                f'<span style="display:inline-block;width:0.9em;height:0.9em;'
+                f'background:{ligand_color};border-radius:2px;margin-right:0.3em;'
+                f'vertical-align:middle;"></span>' if pdb.get("ligand_resname") else ""
+            )
+            pdb_caption_lines.append(f"{swatch}<b>{label}</b> {pdb['pdb_id']} ({res_note}, {ligand_note})")
 
-            scene_structures.append(structure_entry)
+        no_pdb_labels = [label for label in labels if not by_label[label].get("pdb_structures")]
 
         if pdb_caption_lines:
-            st.caption("Real PDB structure overlay (semi-transparent): " + " | ".join(pdb_caption_lines))
+            st.markdown(
+                "Real PDB structure overlay (semi-transparent, thinner sticks): "
+                + " &nbsp;|&nbsp; ".join(pdb_caption_lines),
+                unsafe_allow_html=True,
+            )
         if no_pdb_labels:
             st.caption(f"No RCSB structure found for: {', '.join(no_pdb_labels)} (AlphaFold model only)")
 

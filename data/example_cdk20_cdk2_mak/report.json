@@ -221,7 +221,7 @@
           "conservation": "identical"
         }
       ],
-      "pdb": null
+      "pdb_structures": []
     },
     {
       "accession": "P24941",
@@ -403,41 +403,113 @@
           "conservation": "gap"
         }
       ],
-      "pdb": {
-        "pdb_id": "6Q4G",
-        "resolution": 0.98,
-        "ligand_resname": "HJK",
-        "chain": "A",
-        "aligned_pdb": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned_pdb/P24941_pdb_aligned.pdb",
-        "rmsd": 2.8502376178352913,
-        "n_aligned_atoms": 280,
-        "error": null,
-        "pocket_resseq": {
-          "10": 10,
-          "11": 11,
-          "12": 12,
-          "13": 13,
-          "14": 14,
-          "15": 15,
-          "18": 18,
-          "31": 31,
-          "33": 33,
-          "51": 51,
-          "64": 64,
-          "80": 80,
-          "81": 81,
-          "83": 83,
-          "127": 127,
-          "129": 129,
-          "131": 131,
-          "132": 132,
-          "134": 134,
-          "144": 144,
-          "145": 145,
-          "147": 147,
-          "148": 148
+      "pdb_structures": [
+        {
+          "pdb_id": "6Q4G",
+          "resolution": 0.98,
+          "ligand_resname": "HJK",
+          "chain": "A",
+          "aligned_pdb": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned_pdb/P24941_pdb0_aligned.pdb",
+          "rmsd": 2.8502376178352913,
+          "n_aligned_atoms": 280,
+          "error": null,
+          "pocket_resseq": {
+            "10": 10,
+            "11": 11,
+            "12": 12,
+            "13": 13,
+            "14": 14,
+            "15": 15,
+            "18": 18,
+            "31": 31,
+            "33": 33,
+            "51": 51,
+            "64": 64,
+            "80": 80,
+            "81": 81,
+            "83": 83,
+            "127": 127,
+            "129": 129,
+            "131": 131,
+            "132": 132,
+            "134": 134,
+            "144": 144,
+            "145": 145,
+            "147": 147,
+            "148": 148
+          }
+        },
+        {
+          "pdb_id": "6Q49",
+          "resolution": 1.0,
+          "ligand_resname": "HGQ",
+          "chain": "A",
+          "aligned_pdb": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned_pdb/P24941_pdb1_aligned.pdb",
+          "rmsd": 3.5917421202376043,
+          "n_aligned_atoms": 264,
+          "error": null,
+          "pocket_resseq": {
+            "10": 10,
+            "11": 11,
+            "12": 12,
+            "13": 13,
+            "14": 14,
+            "15": 15,
+            "18": 18,
+            "31": 31,
+            "33": 33,
+            "51": 51,
+            "64": 64,
+            "80": 80,
+            "81": 81,
+            "83": 83,
+            "127": 127,
+            "129": 129,
+            "131": 131,
+            "132": 132,
+            "134": 134,
+            "144": 144,
+            "145": 145,
+            "147": 147,
+            "148": 148
+          }
+        },
+        {
+          "pdb_id": "6Q4H",
+          "resolution": 1.0,
+          "ligand_resname": "HGH",
+          "chain": "A",
+          "aligned_pdb": "/home/rhara/work/dd_compare/data/example_cdk20_cdk2_mak/aligned_pdb/P24941_pdb2_aligned.pdb",
+          "rmsd": 3.589046034911413,
+          "n_aligned_atoms": 264,
+          "error": null,
+          "pocket_resseq": {
+            "10": 10,
+            "11": 11,
+            "12": 12,
+            "13": 13,
+            "14": 14,
+            "15": 15,
+            "18": 18,
+            "31": 31,
+            "33": 33,
+            "51": 51,
+            "64": 64,
+            "80": 80,
+            "81": 81,
+            "83": 83,
+            "127": 127,
+            "129": 129,
+            "131": 131,
+            "132": 132,
+            "134": 134,
+            "144": 144,
+            "145": 145,
+            "147": 147,
+            "148": 148
+          }
         }
-      }
+      ]
     },
     {
       "accession": "P20794",
@@ -619,7 +691,7 @@
           "conservation": "non-conservative"
         }
       ],
-      "pdb": null
+      "pdb_structures": []
     }
   ]
 }
