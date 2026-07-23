@@ -242,7 +242,8 @@ class SelectedPdbStructure:
 
 def select_pdb_structures(
     accession: str, canonical_seq: str, out_dir: Union[str, Path], *,
-    scan_cap: int = 25, min_ligand_atoms: int = 5, max_structures: int = 3, show_progress: bool = True,
+    scan_cap: int = 25, min_ligand_atoms: int = 5, max_structures: int = 3,
+    resolution_cutoff: float = 2.0, show_progress: bool = True,
 ) -> List["SelectedPdbStructure"]:
     """Pick up to `max_structures` real PDB structures for `accession`,
     preferring ones with a genuine bound ligand (not water/cryoprotectant/
@@ -256,7 +257,15 @@ def select_pdb_structures(
     downloaded/parsed for ligand content only as needed, stopping once
     `max_structures` distinct ligands are found or `scan_cap` candidates
     have been scanned -- a well-studied target (e.g. CDK2's 512 entries)
-    would otherwise mean downloading hundreds of structures."""
+    would otherwise mean downloading hundreds of structures.
+
+    `resolution_cutoff` (Angstrom, lower is better -- 2.0 by default)
+    excludes any candidate whose resolution is worse than this or entirely
+    unreported (e.g. NMR structures don't have one) *before* downloading
+    its coordinates at all, for both the ligand-bound and apo-fallback
+    paths -- this is a quality floor, not just a ranking tiebreaker, so a
+    low-resolution entry is never picked just because it happened to be
+    the first ligand-bound one scanned."""
     out_dir = Path(out_dir)
     pdb_ids = list_pdb_ids_for_uniprot(accession)  # already best-resolution-first (server-side sort)
     if not pdb_ids:
@@ -276,6 +285,8 @@ def select_pdb_structures(
             meta = fetch_entry_metadata(pdb_id)
         except Exception:
             continue  # a single entry's metadata being unfetchable shouldn't abort the whole scan
+        if meta.resolution is None or meta.resolution > resolution_cutoff:
+            continue  # doesn't meet the quality bar; skip without downloading coordinates
         dest = out_dir / f"{meta.pdb_id}.pdb"
         try:
             text = download_pdb(meta.pdb_id, dest)
@@ -302,7 +313,10 @@ def select_pdb_structures(
         return selections
     if best_apo is None:
         if show_progress:
-            print(f"[pdbstruct] {accession}: {scanned} candidate(s) scanned, none downloadable", flush=True)
+            print(
+                f"[pdbstruct] {accession}: {scanned} candidate(s) scanned, none met the "
+                f"resolution_cutoff={resolution_cutoff}Å bar (or were downloadable)", flush=True,
+            )
         return []
     meta, dest = best_apo
     if show_progress:

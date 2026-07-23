@@ -81,8 +81,13 @@ def main() -> None:
             for i, pdb in enumerate(by_label[label].get("pdb_structures") or []):
                 ligand_note = pdb.get("ligand_resname") or "apo"
                 res_note = f"{pdb['resolution']:.2f}Å" if pdb.get("resolution") is not None else "n/a"
+                # " " (an actual non-breaking-space character, not the
+                # "&nbsp;" HTML entity) since st.checkbox's label doesn't
+                # render raw HTML -- plain leading spaces would also work
+                # visually but a literal space run reads oddly in the source.
+                indent = " " * 8
                 st.checkbox(
-                    f"↳ {pdb['pdb_id']} ({ligand_note}, {res_note})", value=True, key=f"show_pdb_{label}_{i}",
+                    f"{indent}{pdb['pdb_id']} ({ligand_note}, {res_note})", value=True, key=f"show_pdb_{label}_{i}",
                 )
         selected = [label for label in labels if st.session_state[f"show_prot_{label}"]]
         show_pocket = st.checkbox("Highlight reference pocket residues", value=True)
@@ -130,7 +135,7 @@ def main() -> None:
         all_pdb_entries = [
             (label, i, pdb) for label in labels for i, pdb in enumerate(by_label[label].get("pdb_structures") or [])
         ]
-        ligand_colors = scene.assign_ligand_colors([f"{label}:{pdb['pdb_id']}" for label, i, pdb in all_pdb_entries])
+        pdb_colors = scene.assign_pdb_colors([f"{label}:{pdb['pdb_id']}" for label, i, pdb in all_pdb_entries])
 
         scene_structures = []
         for label in selected:
@@ -157,18 +162,18 @@ def main() -> None:
                         continue
                     pdb_site.append(pdb_resseq)
                     pdb_site_labels[pdb_resseq] = site_labels.get(int(canon_str), canon_str)
-            ligand_color = ligand_colors.get(f"{label}:{pdb['pdb_id']}")
+            structure_color = pdb_colors.get(f"{label}:{pdb['pdb_id']}")
             scene_structures.append({
                 "label": label, "pdb_path": pdb["aligned_pdb"], "chain_id": pdb["chain"], "kind": "pdb",
                 "site_resseqs": pdb_site, "site_labels": pdb_site_labels,
-                "ligand_resname": pdb.get("ligand_resname"), "ligand_color": ligand_color,
+                "ligand_resname": pdb.get("ligand_resname"), "color": structure_color,
             })
             ligand_note = f"ligand {pdb['ligand_resname']}" if pdb.get("ligand_resname") else "apo"
             res_note = f"{pdb['resolution']:.2f}Å" if pdb.get("resolution") is not None else "resolution n/a"
             swatch = (
                 f'<span style="display:inline-block;width:0.9em;height:0.9em;'
-                f'background:{ligand_color};border-radius:2px;margin-right:0.3em;'
-                f'vertical-align:middle;"></span>' if pdb.get("ligand_resname") else ""
+                f'background:{structure_color};border-radius:2px;margin-right:0.3em;'
+                f'vertical-align:middle;"></span>'
             )
             pdb_caption_lines.append(f"{swatch}<b>{label}</b> {pdb['pdb_id']} ({res_note}, {ligand_note})")
 

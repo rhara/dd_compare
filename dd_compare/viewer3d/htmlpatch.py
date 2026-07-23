@@ -53,7 +53,13 @@ def html_with_camera_events(html: str) -> str:
       reruns, unlike this scene's) and re-applies it to each newly-loaded
       scene -- which is what makes the camera position survive a widget
       interaction instead of snapping back to the default zoomTo fit every
-      time.
+      time. The *same* report is also sent once, proactively, right after
+      the initial paint (see below) -- without this, a scene the user never
+      manually dragged/zoomed leaves the component with nothing saved to
+      restore, so the next widget interaction (e.g. a checkbox that changes
+      which structures are shown) would fall through to that new scene's
+      own default `zoomTo()` fit instead, visibly reframing the camera even
+      though the user never touched it.
     - Two animation frames after the initial render (once the paint has
       actually landed), posts `{plviewerReady: true}` -- the signal the
       component waits for before swapping this scene into view, so updates
@@ -77,6 +83,7 @@ try {{
 }} catch (e) {{}}
 requestAnimationFrame(function() {{
   requestAnimationFrame(function() {{
+    try {{ __plvSave(); }} catch (e) {{}}
     try {{ parent.postMessage({{plviewerReady: true}}, "*"); }} catch (e) {{}}
   }});
 }});

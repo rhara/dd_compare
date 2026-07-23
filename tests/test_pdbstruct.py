@@ -97,7 +97,7 @@ def test_select_pdb_structures_prefers_ligand_bound_over_better_resolution(tmp_p
     ids = ["2ABC", "3XYZ"]
     metadata = {
         "2ABC": EntryMetadata(pdb_id="2ABC", method="X-ray", resolution=1.0, title=""),
-        "3XYZ": EntryMetadata(pdb_id="3XYZ", method="X-ray", resolution=2.5, title=""),
+        "3XYZ": EntryMetadata(pdb_id="3XYZ", method="X-ray", resolution=1.8, title=""),
     }
     pdb_text = {"2ABC": _APO_PDB, "3XYZ": _ligand_pdb("LIG")}
 
@@ -119,7 +119,7 @@ def test_select_pdb_structures_falls_back_to_best_resolution_when_all_apo(tmp_pa
     ids = ["2ABC", "3XYZ"]
     metadata = {
         "2ABC": EntryMetadata(pdb_id="2ABC", method="X-ray", resolution=1.0, title=""),
-        "3XYZ": EntryMetadata(pdb_id="3XYZ", method="X-ray", resolution=2.5, title=""),
+        "3XYZ": EntryMetadata(pdb_id="3XYZ", method="X-ray", resolution=1.8, title=""),
     }
 
     def fake_download(pdb_id, dest):
@@ -135,6 +135,72 @@ def test_select_pdb_structures_falls_back_to_best_resolution_when_all_apo(tmp_pa
     assert len(sels) == 1
     assert sels[0].pdb_id == "2ABC"  # best resolution among the (all-apo) candidates
     assert sels[0].ligand_resname is None
+
+
+def test_select_pdb_structures_excludes_worse_than_resolution_cutoff(tmp_path):
+    # 1AAA is ligand-bound but resolution 3.0 -- worse than the default
+    # 2.0Å cutoff, so it must be skipped entirely (never even downloaded);
+    # 2BBB (apo, 1.5Å) is the only one that meets the bar, so it wins the
+    # apo fallback despite being scanned second.
+    ids = ["1AAA", "2BBB"]
+    metadata = {
+        "1AAA": EntryMetadata(pdb_id="1AAA", method="X-ray", resolution=3.0, title=""),
+        "2BBB": EntryMetadata(pdb_id="2BBB", method="X-ray", resolution=1.5, title=""),
+    }
+    pdb_text = {"1AAA": _ligand_pdb("LGA"), "2BBB": _APO_PDB}
+    downloaded = []
+
+    def fake_download(pdb_id, dest):
+        downloaded.append(pdb_id)
+        dest = tmp_path / f"{pdb_id}.pdb"
+        dest.write_text(pdb_text[pdb_id])
+        return pdb_text[pdb_id]
+
+    with patch("dd_compare.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
+         patch("dd_compare.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
+         patch("dd_compare.pdbstruct.download_pdb", side_effect=fake_download):
+        sels = select_pdb_structures("P00000", "A", tmp_path, scan_cap=10, show_progress=False)
+
+    assert [s.pdb_id for s in sels] == ["2BBB"]
+    assert "1AAA" not in downloaded  # excluded by the resolution cutoff before ever being downloaded
+
+
+def test_select_pdb_structures_excludes_unreported_resolution(tmp_path):
+    # An NMR-style entry with no reported resolution at all must be
+    # excluded regardless of how loose the cutoff is (None can't satisfy
+    # a "<= cutoff" comparison).
+    ids = ["1NMR"]
+    metadata = {"1NMR": EntryMetadata(pdb_id="1NMR", method="NMR", resolution=None, title="")}
+
+    with patch("dd_compare.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
+         patch("dd_compare.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]):
+        sels = select_pdb_structures(
+            "P00000", "A", tmp_path, scan_cap=10, resolution_cutoff=100.0, show_progress=False,
+        )
+
+    assert sels == []
+
+
+def test_select_pdb_structures_resolution_cutoff_is_configurable(tmp_path):
+    # The same 3.0Å ligand-bound entry that the default cutoff excludes
+    # (see test above) is accepted once the caller loosens the cutoff.
+    ids = ["1AAA"]
+    metadata = {"1AAA": EntryMetadata(pdb_id="1AAA", method="X-ray", resolution=3.0, title="")}
+    pdb_text = {"1AAA": _ligand_pdb("LGA")}
+
+    def fake_download(pdb_id, dest):
+        dest = tmp_path / f"{pdb_id}.pdb"
+        dest.write_text(pdb_text[pdb_id])
+        return pdb_text[pdb_id]
+
+    with patch("dd_compare.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
+         patch("dd_compare.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
+         patch("dd_compare.pdbstruct.download_pdb", side_effect=fake_download):
+        sels = select_pdb_structures(
+            "P00000", "A", tmp_path, scan_cap=10, resolution_cutoff=3.5, show_progress=False,
+        )
+
+    assert [s.pdb_id for s in sels] == ["1AAA"]
 
 
 def test_select_pdb_structures_returns_empty_when_no_structures_exist(tmp_path):
@@ -166,7 +232,9 @@ def test_select_pdb_structures_collects_multiple_distinct_ligands_up_to_cap(tmp_
     with patch("dd_compare.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
          patch("dd_compare.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
          patch("dd_compare.pdbstruct.download_pdb", side_effect=fake_download):
-        sels = select_pdb_structures("P00000", "A", tmp_path, scan_cap=10, max_structures=3, show_progress=False)
+        sels = select_pdb_structures(
+            "P00000", "A", tmp_path, scan_cap=10, max_structures=3, resolution_cutoff=10.0, show_progress=False,
+        )  # resolution_cutoff loosened -- this test is about dedup/cap logic, not resolution filtering
 
     assert [s.pdb_id for s in sels] == ["1AAA", "2BBB", "4DDD"]
     assert [s.ligand_resname for s in sels] == ["LGA", "LGB", "LGC"]

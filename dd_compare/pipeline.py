@@ -86,6 +86,7 @@ def discover(
 def analyze(
     out_dir: Union[str, Path], *, reference: Optional[str] = None, pocket_rank: int = 1, show_progress: bool = True,
     pdb_overlay: bool = True, pdb_scan_cap: int = 25, pdb_max_structures: int = 3,
+    pdb_resolution_cutoff: float = 2.0,
 ) -> dict:
     """Run pocket detection + cross-protein alignment + structural overlay
     across every protein `fetch_all` downloaded into `out_dir`. `reference`
@@ -158,7 +159,8 @@ def analyze(
             try:
                 pdb_selections[acc] = pdbstruct.select_pdb_structures(
                     acc, canonical_by_acc[acc], out_dir / "raw_pdb", scan_cap=pdb_scan_cap,
-                    max_structures=pdb_max_structures, show_progress=show_progress,
+                    max_structures=pdb_max_structures, resolution_cutoff=pdb_resolution_cutoff,
+                    show_progress=show_progress,
                 )
             except Exception as e:
                 if show_progress:

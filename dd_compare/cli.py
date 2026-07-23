@@ -56,6 +56,13 @@ def _add_align_args(parser: argparse.ArgumentParser) -> None:
              "best-resolution one (default: 25) -- caps network/download cost for well-studied targets with "
              "hundreds of entries.",
     )
+    parser.add_argument(
+        "--pdb-resolution-cutoff", type=float, default=2.0,
+        help="With PDB overlay enabled: worst resolution (Angstrom, lower is better) a real structure may have to "
+             "be considered at all (default: 2.0) -- entries worse than this, or with no reported resolution "
+             "(e.g. NMR), are skipped before download, for both the ligand-bound and best-resolution-fallback "
+             "paths.",
+    )
     parser.add_argument("--no-progress", action="store_true", help="Suppress the one-line-per-item progress output")
 
 
@@ -107,7 +114,8 @@ def main_align(argv=None) -> None:
     args = build_align_parser().parse_args(argv)
     report = pipeline.analyze(
         args.out_dir, reference=args.reference, pocket_rank=args.pocket_rank, show_progress=not args.no_progress,
-        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap, pdb_max_structures=args.pdb_max_structures,
+        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap,
+        pdb_max_structures=args.pdb_max_structures, pdb_resolution_cutoff=args.pdb_resolution_cutoff,
     )
     _print_report(report, args.out_dir)
 
@@ -119,7 +127,8 @@ def main_run(argv=None) -> None:
     pipeline.fetch_all(args.accessions, args.out_dir, show_progress=not args.no_progress)
     report = pipeline.analyze(
         args.out_dir, reference=args.reference, pocket_rank=args.pocket_rank, show_progress=not args.no_progress,
-        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap, pdb_max_structures=args.pdb_max_structures,
+        pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap,
+        pdb_max_structures=args.pdb_max_structures, pdb_resolution_cutoff=args.pdb_resolution_cutoff,
     )
     _print_report(report, args.out_dir)
 

@@ -139,11 +139,15 @@ Score) picks a different pocket on the reference if the top one isn't the
 site of interest. `--no-pdb-overlay` skips the real-RCSB-structure lookup
 described below (fetch/align only against AlphaFold models, as in earlier
 versions); `--pdb-max-structures N` (default 3) caps how many distinct
-ligand-bound real structures are kept per protein; `--pdb-scan-cap N`
-(default 25) caps how many resolution-ranked candidates get downloaded and
-checked for a bound ligand, at most, before giving up on finding that many
-and falling back to the single best-resolution one, for a target with
-hundreds of structures.
+ligand-bound real structures are kept per protein; `--pdb-resolution-cutoff
+N` (default 2.0, Angstrom) excludes any candidate worse than this
+resolution -- or with no reported resolution at all, e.g. NMR structures
+-- before it's even downloaded, for both the ligand-bound and
+best-resolution-fallback paths; `--pdb-scan-cap N` (default 25) caps how
+many resolution-ranked candidates get checked for a bound ligand, at most,
+before giving up on finding `--pdb-max-structures` of them and falling
+back to the single best-resolution one, for a target with hundreds of
+structures.
 
 All commands print one line per completed item as it happens; pass
 `--no-progress` to suppress this and only print the final summary.
@@ -151,12 +155,13 @@ All commands print one line per completed item as it happens; pass
 ## Real-structure overlay
 
 `dd_compare-align`/`-run` also looks up, for every protein, whether it has
-any real RCSB structures and -- if so -- picks up to `--pdb-max-structures`
-of them, one per *distinct* bound ligand (not water/cryoprotectant/
-cofactor; the best-resolution entry for each ligand wins if the same
-ligand shows up in more than one candidate), falling back to a single
-best-resolution entry if none of the scanned candidates has a ligand at
-all -- and superposes each onto the reference alongside that protein's
+any real RCSB structures at or better than `--pdb-resolution-cutoff` and --
+if so -- picks up to `--pdb-max-structures` of them, one per *distinct*
+bound ligand (not water/cryoprotectant/cofactor; the best-resolution entry
+for each ligand wins if the same ligand shows up in more than one
+candidate), falling back to a single best-resolution entry (still subject
+to the same cutoff) if none of the scanned candidates has a ligand at all
+-- and superposes each onto the reference alongside that protein's
 AlphaFold model. This is purely an *additional* visualization layer:
 pocket detection and the cross-protein sequence/pocket mapping stay
 anchored on the AlphaFold model unconditionally, exactly as before -- see
@@ -175,16 +180,21 @@ streamlit run app.py -- --report-dir data/example_cdk20_cdk2_mak
 ```
 
 Open the **Structure overlay** tab. In the sidebar's "Proteins to show"
-list, each real structure gets its own checkbox nested under its
-protein's (e.g. `↳ 6Q4G (HJK, 0.98Å)` under `P24941`), independent of that
-protein's own AlphaFold checkbox and of its other real structures -- check
-as many or as few as you want to compare at once. Each shown structure is
-drawn as a semi-transparent layer, with its bound ligand as sticks in its
-own distinct color (a colored swatch in the caption above the 3D view
-identifies which color is which PDB ID/ligand) -- a direct visual check of
-whether the reference's mapped pocket residues line up with where several
-different real, known ligands actually sit. The caption also names which
-proteins (CDK20, MAK) had no RCSB structure at all.
+list, each real structure gets its own indented checkbox under its
+protein's (e.g. `6Q4G (HJK, 0.98Å)` indented under `P24941`), independent
+of that protein's own AlphaFold checkbox and of its other real structures
+-- check as many or as few as you want to compare at once. Each shown
+structure is drawn as a semi-transparent layer in its own distinct color
+(cartoon and bound-ligand sticks alike, cycled from a palette with no
+black/gray -- achromatic colors are hard to read once semi-transparent), a
+colored swatch in the caption above the 3D view identifies which color is
+which PDB ID/ligand -- a direct visual check of whether the reference's
+mapped pocket residues line up with where several different real, known
+ligands actually sit. The caption also names which proteins (CDK20, MAK)
+had no RCSB structure at all. The 3D view's camera position is preserved
+across every checkbox toggle (it only resets on "Reset view"), so
+switching which structures are shown never disrupts a comparison you're
+mid-way through setting up.
 
 ## Design notes
 
@@ -275,10 +285,13 @@ proteins (CDK20, MAK) had no RCSB structure at all.
   scope there; the real-structure overlay is display-only.
 - **Real-structure overlay picks up to `--pdb-max-structures` entries per
   protein** (default 3, one per distinct bound ligand) among the
-  best-resolution `--pdb-scan-cap` candidates -- it does not scan every
-  structure for a target with hundreds of them (e.g. CDK2's 512), so a
-  ligand-bound entry outside that scanned window could be missed, and it
-  does not show every ligand a target has ever been crystallized with,
-  just the ones picked. Deduplication is by exact ligand resname, so two
-  genuinely different ligands that happen to share the same three-letter
-  RCSB code (rare, but not impossible) would be treated as one.
+  best-resolution `--pdb-scan-cap` candidates at or better than
+  `--pdb-resolution-cutoff` -- it does not scan every structure for a
+  target with hundreds of them (e.g. CDK2's 512), so a ligand-bound entry
+  outside that scanned window could be missed, and it does not show every
+  ligand a target has ever been crystallized with, just the ones picked.
+  Deduplication is by exact ligand resname, so two genuinely different
+  ligands that happen to share the same three-letter RCSB code (rare, but
+  not impossible) would be treated as one. A target with no structures at
+  or better than the resolution cutoff gets no real-structure overlay at
+  all, the same as one with no RCSB structures whatsoever.

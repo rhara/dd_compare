@@ -16,19 +16,25 @@ from typing import Dict, Optional, Sequence, Tuple, Union
 import py3Dmol
 
 PALETTE = [
+    # No black/gray: an achromatic entry here (the original list had
+    # "#7f7f7f", matplotlib's tab10 gray) is hard to tell apart from
+    # other structures once rendered semi-transparent, and easy to
+    # mistake for "no color at all" -- every entry here should read as a
+    # clear, distinct hue at a glance.
     "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
-    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+    "#8c564b", "#e377c2", "#20c997", "#bcbd22", "#17becf",
 ]
 REFERENCE_COLOR = "#444444"
 SITE_COLOR = "yellow"
 PDB_CARTOON_OPACITY = 0.6  # visible-but-distinct from the solid AlphaFold cartoon (0.35 was too faint to read)
-LIGAND_COLOR = "#ff9900"  # fallback when no per-ligand color was assigned
 
-# Distinct from PALETTE (protein cartoon colors) so a ligand's stick color
-# never visually collides with any protein's own cartoon, and multiple
-# ligands shown together (even across different proteins) stay
-# distinguishable from each other.
-LIGAND_PALETTE = [
+# Distinct hues from PALETTE (protein/AFDB cartoon colors) -- also no
+# black/gray, same reasoning as above -- so a real structure's own color
+# (used for *both* its semi-transparent cartoon and its bound ligand's
+# sticks, see assign_pdb_colors) never visually collides with any
+# protein's AFDB cartoon, and multiple real structures shown together
+# (even across different proteins) stay distinguishable from each other.
+PDB_PALETTE = [
     "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
     "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe",
 ]
@@ -70,13 +76,14 @@ def assign_colors(labels: Sequence[str], reference_label: str) -> Dict[str, str]
     return colors
 
 
-def assign_ligand_colors(keys: Sequence[str]) -> Dict[str, str]:
+def assign_pdb_colors(keys: Sequence[str]) -> Dict[str, str]:
     """One color per key (e.g. an `f"{accession}:{pdb_id}"` string),
-    cycling through `LIGAND_PALETTE`. Assign this over the *full* set of
-    available real-structure entries (not just the ones currently checked
-    to show) so a given ligand's color stays stable as the user toggles
-    other structures on/off."""
-    return {key: LIGAND_PALETTE[i % len(LIGAND_PALETTE)] for i, key in enumerate(keys)}
+    cycling through `PDB_PALETTE` -- used for a real structure's cartoon
+    *and* its bound ligand's sticks alike, so the two read as one visual
+    unit. Assign this over the *full* set of available real-structure
+    entries (not just the ones currently checked to show) so a given
+    structure's color stays stable as the user toggles others on/off."""
+    return {key: PDB_PALETTE[i % len(PDB_PALETTE)] for i, key in enumerate(keys)}
 
 
 def _ca_coords(pdb_path: str, chain_id: str, resnums: Sequence[int]) -> Dict[int, Tuple[float, float, float]]:
@@ -124,21 +131,20 @@ def build_overlay_view(
 
     Each entry: `label` (used to look up a shared per-protein `color` from
     `colors` when `color` isn't given directly on the entry -- an afdb
-    entry and its protein's own pdb entries normally share a label so they
-    render in the same color), `pdb_path`, `chain_id`, `site_resseqs`/
-    `site_labels` (that structure's *own* numbering -- for `kind="pdb"` see
-    `pipeline.py`'s `pocket_resseq` mapping, since a real PDB entry's
-    residue numbers don't equal canonical UniProt position, unlike an
-    AlphaFold model; `site_labels` is an optional `{resnum: "K33"}` map,
-    used only when `label_residues` is True). `kind` (`"afdb"`, the
-    default: solid cartoon; `"pdb"`: semi-transparent cartoon, see
-    `PDB_CARTOON_OPACITY`, plus thinner pocket-residue sticks). For
-    `kind="pdb"` entries only: `ligand_resname` (drawn as sticks if given
-    -- the actual payoff of overlaying a real structure at all) and
-    `ligand_color` (that ligand's own distinct color, e.g. from
-    `assign_ligand_colors`, so multiple ligands shown together stay
-    visually distinguishable from each other; falls back to the fixed
-    `LIGAND_COLOR` if not given)."""
+    entry normally leaves `color` unset and inherits its protein's shared
+    color this way, while a pdb entry normally passes its own explicit
+    `color`, e.g. from `assign_pdb_colors`, so distinct real structures of
+    the same protein don't all render identically), `pdb_path`, `chain_id`,
+    `site_resseqs`/`site_labels` (that structure's *own* numbering -- for
+    `kind="pdb"` see `pipeline.py`'s `pocket_resseq` mapping, since a real
+    PDB entry's residue numbers don't equal canonical UniProt position,
+    unlike an AlphaFold model; `site_labels` is an optional
+    `{resnum: "K33"}` map, used only when `label_residues` is True). `kind`
+    (`"afdb"`, the default: solid cartoon; `"pdb"`: semi-transparent
+    cartoon, see `PDB_CARTOON_OPACITY`, plus thinner pocket-residue
+    sticks). For `kind="pdb"` entries only: `ligand_resname` (drawn as
+    sticks in the *same* `color` as the entry's own cartoon, if given --
+    the actual payoff of overlaying a real structure at all)."""
     view = py3Dmol.view(width=width, height=height)
     colors = colors or assign_colors([s["label"] for s in structures], reference_label)
 
@@ -170,10 +176,9 @@ def build_overlay_view(
         if kind == "pdb":
             ligand_resname = s.get("ligand_resname")
             if ligand_resname:
-                ligand_color = s.get("ligand_color") or LIGAND_COLOR
                 view.addStyle(
                     {"model": model_index, "resn": ligand_resname},
-                    {"stick": {"colorscheme": _carbon_tint_scheme(ligand_color), "radius": 0.3}},
+                    {"stick": {"colorscheme": _carbon_tint_scheme(color), "radius": 0.3}},
                 )
 
     view.zoomTo()
