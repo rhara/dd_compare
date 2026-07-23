@@ -26,14 +26,13 @@ PALETTE = [
 ]
 REFERENCE_COLOR = "#444444"
 SITE_COLOR = "yellow"
-PDB_CARTOON_OPACITY = 0.6  # visible-but-distinct from the solid AlphaFold cartoon (0.35 was too faint to read)
 
 # Distinct hues from PALETTE (protein/AFDB cartoon colors) -- also no
 # black/gray, same reasoning as above -- so a real structure's own color
-# (used for *both* its semi-transparent cartoon and its bound ligand's
-# sticks, see assign_pdb_colors) never visually collides with any
-# protein's AFDB cartoon, and multiple real structures shown together
-# (even across different proteins) stay distinguishable from each other.
+# (used for *both* its solid cartoon and its bound ligand's sticks, see
+# assign_pdb_colors) never visually collides with any protein's AFDB
+# cartoon, and multiple real structures shown together (even across
+# different proteins) stay distinguishable from each other.
 PDB_PALETTE = [
     "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
     "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe",
@@ -140,11 +139,12 @@ def build_overlay_view(
     PDB entry's residue numbers don't equal canonical UniProt position,
     unlike an AlphaFold model; `site_labels` is an optional
     `{resnum: "K33"}` map, used only when `label_residues` is True). `kind`
-    (`"afdb"`, the default: solid cartoon; `"pdb"`: semi-transparent
-    cartoon, see `PDB_CARTOON_OPACITY`, plus thinner pocket-residue
-    sticks). For `kind="pdb"` entries only: `ligand_resname` (drawn as
-    sticks in the *same* `color` as the entry's own cartoon, if given --
-    the actual payoff of overlaying a real structure at all)."""
+    (`"afdb"`, the default, vs. `"pdb"` -- both render as a solid, fully
+    opaque cartoon; `kind` only affects pocket-residue stick thickness and
+    whether a bound ligand gets drawn, see below). For `kind="pdb"`
+    entries only: `ligand_resname` (drawn as sticks in the *same* `color`
+    as the entry's own cartoon, if given -- the actual payoff of
+    overlaying a real structure at all)."""
     view = py3Dmol.view(width=width, height=height)
     colors = colors or assign_colors([s["label"] for s in structures], reference_label)
 
@@ -153,14 +153,13 @@ def build_overlay_view(
         view.addModel(pdb_text, "pdb")
         color = s.get("color") or colors.get(s["label"], "gray")
         kind = s.get("kind", "afdb")
-        opacity = PDB_CARTOON_OPACITY if kind == "pdb" else 1.0
         chain_sel = {"model": model_index, "chain": s["chain_id"]}
 
         # Every chain is explicitly styled to nothing first, since 3Dmol.js
         # falls back to a default line/wireframe rendering for any atom
         # left unstyled rather than hiding it.
         view.setStyle({"model": model_index}, {})
-        view.setStyle(chain_sel, {"cartoon": {"color": color, "opacity": opacity}})
+        view.setStyle(chain_sel, {"cartoon": {"color": color}})
 
         site = s.get("site_resseqs")
         if site:

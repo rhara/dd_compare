@@ -55,9 +55,9 @@ is what gets translated across proteins.
   RCSB structure a protein has (see "Real-structure overlay" below) gets
   its own checkbox, nested under that protein's own in the "Proteins to
   show" sidebar list -- shown/hidden independently of its AlphaFold model
-  and of each other, drawn as a semi-transparent layer with its own bound
-  ligand as sticks, each ligand in its own distinct color (see the color
-  swatches in the caption above the 3D view).
+  and of each other, drawn as a solid, distinctly-colored cartoon with its
+  own bound ligand as sticks in the same color (see the color swatches in
+  the caption above the 3D view).
 
 ## Worked example: CDK20 vs. CDK2 vs. MAK
 
@@ -81,9 +81,9 @@ canonical sequence, at 298 aa, is simply shorter than CDK20's 346).
 CDK2 also has three real, ligand-bound RCSB structures (`6Q4G`/`HJK` 0.98 Å,
 `6Q49`/`HGQ` 1.00 Å, `6Q4H`/`HGH` 1.00 Å) picked automatically by the
 real-structure overlay (see below) -- the app draws each as its own
-semi-transparent layer alongside CDK2's AlphaFold model, in its own
-distinct color, so the reference's mapped pocket residues can be checked
-against where three different real, known ligands actually sit.
+solid, distinctly-colored cartoon alongside CDK2's AlphaFold model, so
+the reference's mapped pocket residues can be checked against where
+three different real, known ligands actually sit.
 
 ## Similar-protein discovery
 
@@ -184,11 +184,11 @@ list, each real structure gets its own indented checkbox under its
 protein's (e.g. `6Q4G (HJK, 0.98Å)` indented under `P24941`), independent
 of that protein's own AlphaFold checkbox and of its other real structures
 -- check as many or as few as you want to compare at once. Each shown
-structure is drawn as a semi-transparent layer in its own distinct color
-(cartoon and bound-ligand sticks alike, cycled from a palette with no
-black/gray -- achromatic colors are hard to read once semi-transparent), a
-colored swatch in the caption above the 3D view identifies which color is
-which PDB ID/ligand -- a direct visual check of whether the reference's
+structure is drawn as a solid cartoon in its own distinct color (cartoon
+and bound-ligand sticks alike, cycled from a palette with no black/gray
+-- achromatic colors are hard to read), a colored swatch in the caption
+above the 3D view identifies which color is which PDB ID/ligand -- a
+direct visual check of whether the reference's
 mapped pocket residues line up with where several different real, known
 ligands actually sit. The caption also names which proteins (CDK20, MAK)
 had no RCSB structure at all. The 3D view's camera position is preserved

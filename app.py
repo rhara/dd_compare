@@ -181,7 +181,7 @@ def main() -> None:
 
         if pdb_caption_lines:
             st.markdown(
-                "Real PDB structure overlay (semi-transparent, thinner sticks): "
+                "Real PDB structure overlay (thinner sticks): "
                 + " &nbsp;|&nbsp; ".join(pdb_caption_lines),
                 unsafe_allow_html=True,
             )
