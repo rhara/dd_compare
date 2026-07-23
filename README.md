@@ -44,8 +44,9 @@ is what gets translated across proteins.
 - **App (`streamlit run app.py -- --report-dir DIR`)**: four tabs --
   Overview (per-protein length/%identity/RMSD table), Active-site
   comparison (the pocket-residue mapping table, colored by conservation),
-  Structure overlay (`dd_viewer`'s double-buffered `view3d` component,
-  vendored and trimmed -- every protein's AlphaFold model superposed,
+  Structure overlay (a double-buffered `view3d` component vendored and
+  trimmed from the now-retired `dd_viewer` project -- every protein's
+  AlphaFold model superposed,
   distinctly colored, reference pocket residues highlighted on each, with
   an optional text label per pocket residue -- toggle both the highlight
   and the labels from the sidebar, independent of which proteins are
@@ -242,11 +243,12 @@ proteins (CDK20, MAK) had no RCSB structure at all.
   built on, rather than maintaining a separate physicochemical grouping
   that could disagree with it.
 - **No rdkit, no C++, no GPU**: this project has no small-molecule handling
-  (unlike `dd_seqalign`, which vendors `dd_viewer` whole and therefore
-  carries `rdkit` along for a single-receptor scene builder dd_compare
-  never uses -- only the plain string-patching + component pieces of
-  `dd_viewer` are vendored here, see `dd_compare/viewer3d/__init__.py`).
-  Its own work is REST fetches and sequence alignment (both cheap) plus
+  (unlike `dd_seqalign`, which vendors the now-retired `dd_viewer` project
+  whole and therefore carries `rdkit` along for a single-receptor scene
+  builder dd_compare never uses -- only the plain string-patching +
+  component pieces of `dd_viewer` are vendored here, directly from that
+  now-retired project, see `dd_compare/viewer3d/__init__.py`). Its own
+  work is REST fetches and sequence alignment (both cheap) plus
   delegating anything heavier to already-compiled tools (`fpocket`, PyMOL's
   C++ core) -- there's no hot numeric loop of this project's own worth
   porting to C++, and no GPU-parallelizable workload like `dd_afpocket`'s MD
