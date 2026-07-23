@@ -156,6 +156,23 @@ pick per protein (`pdb.pdb_id`, `.resolution`, `.ligand_resname`, ...); a
 protein with no RCSB structures at all (e.g. CDK20 itself) simply has
 `pdb: null`.
 
+**Viewing it**: the committed CDK20/CDK2/MAK example already includes a
+real-structure overlay for CDK2 (`6Q4G`, 0.98 Å, bound ligand `HJK`) --
+no extra fetch needed, just open the app against it:
+
+```bash
+streamlit run app.py -- --report-dir data/example_cdk20_cdk2_mak
+```
+
+Open the **Structure overlay** tab; with the sidebar's "Show real PDB
+structure when available" checkbox on (the default), CDK2's real
+structure is drawn as a second, semi-transparent layer on top of its
+AlphaFold model, with `HJK` shown as sticks -- a direct visual check of
+whether the reference's mapped pocket residues actually line up with
+where a real, known ligand sits. The caption above the 3D view names the
+PDB ID/resolution/ligand picked for each protein shown, and which
+proteins (CDK20, MAK) had no RCSB structure at all.
+
 ## Design notes
 
 - **Vendored, not imported, from sibling `dd_*` projects**: `pdbio.py`
