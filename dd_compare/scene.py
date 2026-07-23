@@ -55,6 +55,21 @@ def _carbon_tint_scheme(carbon_color: str) -> dict:
     return {"prop": "elem", "map": {**_HETERO_ELEMENT_COLORS, "C": carbon_color}}
 
 
+def _readable_font_color(background_hex: str) -> str:
+    """"black" or "white", whichever reads more clearly on top of
+    `background_hex` -- some palette entries (e.g. `PDB_PALETTE`'s bright
+    yellow `#ffe119`) are light enough that white label text is nearly
+    invisible. Perceived brightness via the standard ITU-R BT.601
+    luma weighting (0.299R + 0.587G + 0.114B), same formula commonly used
+    for this exact "pick readable text color" problem."""
+    h = background_hex.lstrip("#")
+    if len(h) != 6:
+        return "white"
+    r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+    luma = 0.299 * r + 0.587 * g + 0.114 * b
+    return "black" if luma > 150 else "white"
+
+
 def assign_colors(labels: Sequence[str], reference_label: str) -> Dict[str, str]:
     """One color per label, cycling through `PALETTE`; the reference always
     gets the same neutral gray so it reads as "the reference", not just
@@ -106,11 +121,12 @@ def _ca_coords(pdb_path: str, chain_id: str, resnums: Sequence[int]) -> Dict[int
 
 
 def _add_site_labels(view: py3Dmol.view, pdb_path: str, chain_id: str, site_labels: Dict[int, str], color: str) -> None:
+    font_color = _readable_font_color(color)
     for resnum, coord in _ca_coords(pdb_path, chain_id, list(site_labels)).items():
         view.addLabel(site_labels.get(resnum, str(resnum)), {
             "position": {"x": coord[0], "y": coord[1], "z": coord[2]},
             "backgroundColor": color, "backgroundOpacity": 0.8,
-            "fontColor": "white", "fontSize": 11, "showBackground": True, "borderThickness": 0.4,
+            "fontColor": font_color, "fontSize": 11, "showBackground": True, "borderThickness": 0.4,
         })
 
 
