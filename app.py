@@ -33,8 +33,25 @@ def _parse_cli_defaults() -> argparse.Namespace:
 
 
 @st.cache_data(show_spinner=False)
-def _load_json(path: str) -> dict:
+def _load_json(path: str, mtime: float) -> dict:
+    # `mtime` deliberately has no leading underscore: Streamlit's
+    # cache_data excludes underscore-prefixed params from the cache key
+    # (meant for unhashable args like DB connections) -- naming it `_mtime`
+    # would silently defeat the whole point of passing it at all.
     return json.loads(Path(path).read_text())
+
+
+def _load_json_fresh(path: Path) -> dict:
+    """`_load_json`, but keyed on the file's current mtime too -- a plain
+    `@st.cache_data` keyed on `path` alone keeps serving the *first*
+    version ever loaded for that path, forever, even after re-running
+    `dd_compare-fetch`/`-align` writes a new `report.json` to the same
+    file while this app's own process keeps running (Streamlit has no way
+    to know the file changed otherwise). Re-fetching more real structures
+    into an already-open report directory is an explicitly supported
+    workflow (see README "Real-structure overlay"), so this cache must
+    actually invalidate when the file does."""
+    return _load_json(str(path), path.stat().st_mtime)
 
 
 def main() -> None:
@@ -50,7 +67,7 @@ def main() -> None:
         st.info(f"No report.json found in {report_dir!r}. Run `dd_compare-run ACC1 ACC2 [...] -o {report_dir}` first.")
         st.stop()
 
-    report = _load_json(str(report_path))
+    report = _load_json_fresh(report_path)
     proteins = report["proteins"]
     labels = [p["accession"] for p in proteins]
     reference = report["reference"]
@@ -204,7 +221,7 @@ def main() -> None:
 
     if candidates_path.exists():
         with tabs[3]:
-            candidates_report = _load_json(str(candidates_path))
+            candidates_report = _load_json_fresh(candidates_path)
             st.caption(
                 f"Seed: {candidates_report['seed_accession']} ({candidates_report['seed_name']}) -- "
                 f"family {candidates_report['family_database']}:{candidates_report['family_id']} "
