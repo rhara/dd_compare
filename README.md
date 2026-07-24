@@ -126,26 +126,33 @@ UniProt accession, a ChEMBL target ID (e.g. `CHEMBL301`), or a raw
 amino-acid sequence pasted directly -- useful when starting from a ChEMBL
 target of interest or a sequence that isn't in UniProt yet.
 
-Three explicit steps, deliberately not one: build the table first (fast,
-no downloads), review it, then fetch AlphaFold models/RCSB structures
-and/or count ChEMBL bioactivity data only for the accessions actually
-worth it.
+Four explicit steps, deliberately not one: build the table first (fast,
+no downloads), review it, then enrich it with cheap, count-only signals
+(ChEMBL activity counts, RCSB structure counts) before ever downloading
+an actual AlphaFold model or PDB structure for anything.
 
 ```bash
 dd_idea-search Q8IZL9 -o CDK20_inhibition/pocket_detection
 # -> prints a full table (Family/Gene/Organism/Length/%Id/E-value), no downloads
-
-dd_idea-search --fetch P24941 P20794 -o CDK20_inhibition/pocket_detection --resolution-cutoff 2.5
-# -> AlphaFold model (if it's the seed) + every RCSB structure <= 2.5Å for just those two
-
-dd_idea-search --fetch-all -o CDK20_inhibition/pocket_detection --resolution-cutoff 2.5
-# -> same, for every row in the table (can mean hundreds of structures for a well-studied hit -- see below)
 
 dd_idea-search --chembl-activity-all -o CDK20_inhibition/pocket_detection
 # -> resolves each row's ChEMBL SINGLE PROTEIN target(s) and counts binding-assay
 #    activities with a pChEMBL value (same filter dd_chembl itself uses for QSAR
 #    training data) -- cheap (counts only, one request per target, no bioactivity
 #    data actually downloaded), so --all is reasonable here unlike --fetch-all
+
+dd_idea-search --pdb-count-all -o CDK20_inhibition/pocket_detection
+# -> counts every RCSB structure cross-referenced to each row's accession --
+#    one lightweight search-API call per accession, no resolution filtering,
+#    no downloads. Cheap like --chembl-activity-all, so --all is fine here too.
+#    Lets --rank (below) factor in real template availability before any
+#    actual --fetch happens -- see "Recommended workflow" below
+
+dd_idea-search --fetch P24941 P20794 -o CDK20_inhibition/pocket_detection --resolution-cutoff 2.5
+# -> AlphaFold model (if it's the seed) + every RCSB structure <= 2.5Å for just those two
+
+dd_idea-search --fetch-all -o CDK20_inhibition/pocket_detection --resolution-cutoff 2.5
+# -> same, for every row in the table (can mean hundreds of structures for a well-studied hit -- see below)
 ```
 
 A well-studied hit can have hundreds of RCSB entries (CDK2 alone: 512
@@ -225,7 +232,11 @@ of what it means biologically):
   (about half of CDK20's hits have zero RCSB structures, so folding that
   into the bottom quantile would compress every real nonzero count into
   one or two classes); nonzero values are then quantile-binned among just
-  the other nonzero values.
+  the other nonzero values. The template count itself prefers an exact,
+  resolution-filtered `--fetch`/`--fetch-all` count when a row has one, but
+  falls back to the cheaper, resolution-unfiltered `--pdb-count`/
+  `--pdb-count-all` total otherwise -- see "Recommended workflow" below for
+  why that fallback is the whole point.
 - **Family class** -- how deep a hit's UniProt family hierarchy
   (superfamily -> family -> subfamily) matches the seed's, from the top:
   exact subfamily match -> top class; same family, different subfamily
@@ -243,31 +254,44 @@ and no RCSB structures of its own).
 
 ### Recommended workflow: rank before you fetch
 
-`--rank` doesn't require `--fetch`/`--fetch-all` to have run first --
-a row whose `pdb_structures` is still `None` (not yet checked) scores
-template class 1, the same as a row that *was* checked and had zero, so
-it never breaks the ranking, it just can't yet distinguish on that one
-axis. Since identity comes free with the initial search and ChEMBL
-activity counts are cheap (a couple of small REST calls per accession),
-ranking on those two plus family -- *before* spending any time on RCSB --
-is enough to see who's actually worth fetching structures for:
+RCSB template count is one of `--rank`'s four signals, but it shouldn't
+have to wait for the one operation (`--fetch`/`--fetch-all`) that's
+actually expensive -- that would make ranking circular: you'd need to
+already know which accessions are worth fetching structures for in order
+to fetch structures for the accessions worth it. `--pdb-count`/
+`--pdb-count-all` breaks that circularity: a single lightweight RCSB
+search-API call per accession (no resolution filtering, no downloads)
+gives `--rank` a real, if resolution-unfiltered, template-count signal
+*before* anything is actually downloaded -- exactly the role
+`--chembl-activity`/`--chembl-activity-all` already plays for ChEMBL
+coverage. `--rank` prefers an exact `--fetch`/`--fetch-all` count when one
+is on record for a row, and only falls back to the `--pdb-count` total
+otherwise (see `dd_idea.rank._template_count`) -- so re-ranking after an
+actual fetch sharpens the number for just the rows that were fetched,
+without needing to have fetched everything first.
 
 ```bash
 dd_idea-search Q8IZL9 -o CDK20_inhibition/pocket_detection
 dd_idea-search --chembl-activity-all -o CDK20_inhibition/pocket_detection
+dd_idea-search --pdb-count-all -o CDK20_inhibition/pocket_detection
 dd_idea-search --rank -o CDK20_inhibition/pocket_detection --summary-format markdown
-# -> review hits_ranked.md, no PDB downloads have happened yet
+# -> review hits_ranked.md -- identity, ChEMBL activity, AND real RCSB
+#    template counts are already all factored in, and no actual structure
+#    download (AlphaFold or PDB) has happened yet
 
-dd_idea-search --fetch P24941 P50613 Q16539 P28482 Q13627 Q00535 P06493 Q00534 Q13164 P49841 \
-    P53779 P45984 Q9Y463 P45983 Q14004 P68400 P49759 O43781 Q15759 P27361 \
+dd_idea-search --fetch P24941 P50613 P50750 Q00535 P06493 Q9NYV4 Q00534 Q16539 P11802 P28482 \
+    P49841 Q13627 P49336 Q13164 Q92630 P53779 P45983 P45984 P68400 P49759 \
     -o CDK20_inhibition/pocket_detection
 # -> the top 20 accessions read straight off hits_ranked.md, pasted in by hand.
-#    Fetches structures for only those, instead of --fetch-all's every hit
-#    (CDK20's 99 hits: --fetch-all took several minutes and 420MB just for
-#    RCSB metadata scans/downloads; a top-20 shortlist is a fraction of that)
+#    Fetches actual (resolution-filtered) structures for only those, instead
+#    of --fetch-all's every hit (CDK20's 99 hits, --pdb-count-all'd: 2590
+#    RCSB structures total, unfiltered, in under a minute; --fetch-all
+#    downloading everything at <=2.0Å took several minutes and 420MB for
+#    comparison -- a top-20 shortlist is a fraction of that)
 
 dd_idea-search --rank -o CDK20_inhibition/pocket_detection
-# -> re-run to fold the now-known template counts into the ranking too
+# -> re-run to sharpen the top 20's template counts from --pdb-count's
+#    unfiltered totals to --fetch's exact, resolution-filtered ones
 ```
 
 `--fetch-all` is still there for when you actually want everything (e.g.
