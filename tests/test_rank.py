@@ -97,6 +97,31 @@ def test_rank_hits_orders_best_hit_first(tmp_path):
     assert ranked[0].score > ranked[1].score > ranked[2].score
 
 
+def test_normalized_score_is_score_over_max_possible(tmp_path):
+    out_dir = _hits_json(tmp_path, [_hit_row("HIT1", "GENE1", CDK2_FAMILY, 44.0, 275, 3015)])
+    ranked = rank_hits(out_dir, n_classes=5, count_classes=20)
+    assert ranked[0].max_score == 5 * 20 * 20 * 5
+    assert ranked[0].normalized_score == ranked[0].score / (5 * 20 * 20 * 5)
+
+
+def test_normalized_score_top_hit_is_1_0(tmp_path):
+    # A hit that's the sole nonzero value for every zero-inflated signal and
+    # the seed's exact subfamily should max out every class -> normalized 1.0.
+    out_dir = _hits_json(tmp_path, [_hit_row("HIT1", "GENE1", CDK2_FAMILY, 44.0, 1, 1)])
+    ranked = rank_hits(out_dir)
+    assert ranked[0].normalized_score == 1.0
+
+
+def test_normalized_score_comparable_across_different_count_classes(tmp_path):
+    # The whole point of normalizing: two rankings run with different
+    # count_classes settings still land the same best-possible hit at 1.0.
+    out_dir = _hits_json(tmp_path, [_hit_row("HIT1", "GENE1", CDK2_FAMILY, 44.0, 1, 1)])
+    ranked_5 = rank_hits(out_dir, count_classes=5)
+    ranked_20 = rank_hits(out_dir, count_classes=20)
+    assert ranked_5[0].score != ranked_20[0].score  # raw scores differ...
+    assert ranked_5[0].normalized_score == ranked_20[0].normalized_score == 1.0  # ...but normalized agree
+
+
 def test_rank_hits_treats_unfetched_rows_as_zero_not_missing(tmp_path):
     out_dir = _hits_json(tmp_path, [
         _hit_row("NOTFETCHED", "X1", CDK2_FAMILY, 40.0, None, None),
@@ -112,6 +137,33 @@ def test_rank_hits_excludes_seed_row(tmp_path):
     out_dir = _hits_json(tmp_path, [_hit_row("HIT1", "GENE1", CDK2_FAMILY, 40.0, 1, 1)])
     ranked = rank_hits(out_dir)
     assert "SEED" not in [h.accession for h in ranked]
+
+
+def test_rank_hits_default_count_classes_separate_ties_5_classes_would_collapse(tmp_path):
+    # CDK2's real numbers (522 templates/3015 activities) and CDK9's (28/2051)
+    # both landed in template/activity class 5 under the old 5-class scheme,
+    # tying their scores despite being nowhere close -- the whole motivation
+    # for widening templates_class/activity_class's default granularity.
+    out_dir = _hits_json(tmp_path, [
+        _hit_row("CDK2", "CDK2", CDK2_FAMILY, 43.8, 522, 3015),
+        _hit_row("CDK9", "CDK9", CDK2_FAMILY, 40.0, 28, 2051),
+        *[_hit_row(f"FILLER{i}", f"F{i}", PAK1_FAMILY, 25.0, i, i * 10) for i in range(1, 10)],
+    ])
+    ranked = rank_hits(out_dir)
+    cdk2 = next(h for h in ranked if h.accession == "CDK2")
+    cdk9 = next(h for h in ranked if h.accession == "CDK9")
+    assert cdk2.templates_class > cdk9.templates_class
+    assert cdk2.activity_class > cdk9.activity_class
+    assert cdk2.score > cdk9.score
+
+
+def test_rank_hits_count_classes_is_overridable(tmp_path):
+    out_dir = _hits_json(tmp_path, [
+        _hit_row("A", "A1", CDK2_FAMILY, 40.0, 10, 10),
+        _hit_row("B", "B1", CDK2_FAMILY, 40.0, 20, 20),
+    ])
+    ranked = rank_hits(out_dir, count_classes=5)
+    assert all(h.templates_class <= 5 and h.activity_class <= 5 for h in ranked)
 
 
 def test_template_count_prefers_fetched_over_pdb_count():

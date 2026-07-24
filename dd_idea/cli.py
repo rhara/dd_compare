@@ -291,7 +291,7 @@ def _print_and_write_summary(rows: list, args) -> None:
         _write_search_summary(rows, args.out_dir, args.summary_format)
 
 
-_RANK_TABLE_HEADERS = ["Rank", "Accession", "Gene", "%Id", "Id.Cls", "#Templ", "T.Cls", "#Activ", "A.Cls", "Fam.Cls", "Score"]
+_RANK_TABLE_HEADERS = ["Rank", "Accession", "Gene", "%Id", "Id.Cls", "#Templ", "T.Cls", "#Activ", "A.Cls", "Fam.Cls", "Score", "Norm"]
 
 
 def _rank_table_row(i: int, h) -> list:
@@ -300,6 +300,7 @@ def _rank_table_row(i: int, h) -> list:
     return [
         str(i), h.accession, h.gene, f"{h.pct_identity:.1f}", str(h.identity_class),
         n_templ, str(h.templates_class), n_act, str(h.activity_class), str(h.family_class), str(h.score),
+        f"{h.normalized_score:.3f}",
     ]
 
 
@@ -315,7 +316,9 @@ def _print_rank_table(ranked: list) -> None:
         "\n(\"?\" = neither --fetch/--fetch-all nor --pdb-count/--pdb-count-all (for #Templ), or "
         "--chembl-activity/--chembl-activity-all (for #Activ), has run yet for that row -- scored as 0/class 1; "
         "#Templ prefers an exact --fetch count over a --pdb-count total when both are on record; "
-        "Score = Id.Cls x T.Cls x A.Cls x Fam.Cls, each 1-5, see dd_idea.rank's module docstring)"
+        "Score = Id.Cls x T.Cls x A.Cls x Fam.Cls -- Id.Cls/Fam.Cls are 1-5, T.Cls/A.Cls are 1-20 by default "
+        "(wider-ranging, less discrete signals), see dd_idea.rank's module docstring; "
+        "Norm = Score / (max possible score), rescaled to 0.0-1.0)"
     )
 
 

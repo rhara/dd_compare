@@ -5,16 +5,24 @@ functions already gathered (no network access, no new fetching): a
 `dd_idea-search --rank` pass is instant no matter how much `--fetch`/
 `--chembl-activity` work preceded it.
 
-Each of the four signals is converted to an ordinal 1-5 class before
+Each of the four signals is converted to an ordinal class before
 combining -- *not* multiplied as raw numbers -- because their raw scales
 are wildly different and skewed in different ways (e.g. ChEMBL activity
 counts span 0-7000+ while identity spans a compact 25-45% band; template
 counts are zero for roughly half of any typical hit set). Multiplying raw
 magnitudes would let whichever metric happens to have the largest numbers
 dominate the ranking regardless of what it actually means biologically.
-The composite score is the product of the four classes (range 1-625): a
-hit weak on any single axis is penalized multiplicatively, not just
-averaged away by the other three.
+Identity and family use 1-5 classes -- family in particular is a genuinely
+discrete signal (exact subfamily match / one level short / superfamily
+only / no match), so finer bins would just split ties, not add real
+information. Templates and activity use a wider 1-20 by default -- their
+raw ranges are wide enough (hundreds of templates, thousands of
+activities) that 5 quantile bins collapsed real differences into ties
+(e.g. CDK2's 522 templates/3015 activities and CDK9's 28/2051 both
+landing in template/activity class 5 despite being nowhere close). The
+composite score is the product of the four classes (range 1-10000 with
+the defaults): a hit weak on any single axis is penalized
+multiplicatively, not just averaged away by the other three.
 """
 from __future__ import annotations
 
@@ -26,6 +34,7 @@ from typing import List, Optional, Sequence, Union
 from .search import _load_hits_json
 
 N_CLASSES = 5
+N_COUNT_CLASSES = 20  # templates_class/activity_class default -- see module docstring
 
 
 def classify_zero_inflated(value: float, all_values: Sequence[float], *, n_classes: int = N_CLASSES) -> int:
@@ -112,10 +121,18 @@ class RankedHit:
     templates_class: int
     activity_class: int
     family_class: int
+    max_score: int  # the highest score any row in this ranking could reach (n_classes^2 * count_classes^2) -- normalized_score's denominator
 
     @property
     def score(self) -> int:
         return self.identity_class * self.templates_class * self.activity_class * self.family_class
+
+    @property
+    def normalized_score(self) -> float:
+        """`score` rescaled to 0.0-1.0 (`score / max_score`) -- lets scores
+        be compared across rankings run with different `n_classes`/
+        `count_classes`, where the raw integer score's own range differs."""
+        return self.score / self.max_score
 
 
 def _template_count(row: dict) -> Optional[int]:
@@ -129,21 +146,26 @@ def _template_count(row: dict) -> Optional[int]:
     return row.get("pdb_count")
 
 
-def rank_hits(out_dir: Union[str, Path], *, n_classes: int = N_CLASSES) -> List[RankedHit]:
+def rank_hits(
+    out_dir: Union[str, Path], *, n_classes: int = N_CLASSES, count_classes: int = N_COUNT_CLASSES,
+) -> List[RankedHit]:
     """Rank every `role == "blast_hit"` row in `{out_dir}/hits.json` by
-    the product of four 1..n_classes ordinal scores (identity, RCSB
-    template count, ChEMBL activity count, family relatedness to the
-    seed), highest first. RCSB template count prefers an exact,
-    resolution-filtered `--fetch`/`--fetch-all` count when available, but
-    falls back to the cheap, resolution-unfiltered `--pdb-count`/
-    `--pdb-count-all` total so real template availability can inform the
-    ranking *before* any actual structure download happens (see
-    `_template_count`) -- the whole point of ranking ahead of fetching.
-    Rows where neither RCSB signal nor `--chembl-activity` have been run
-    yet (`pdb_structures`/`pdb_count`/`chembl_targets` still `None`) are
-    scored as if that count were 0 (class 1) -- "not yet checked" and
-    "checked, found none" are deliberately not distinguished here, unlike
-    in `hits.json` itself, since a ranking has to put every row somewhere."""
+    the product of four ordinal scores (identity, RCSB template count,
+    ChEMBL activity count, family relatedness to the seed), highest first.
+    Identity and family use `n_classes` classes (1-5 by default); template
+    and activity counts -- wider-ranging, less discrete signals -- use the
+    finer `count_classes` (1-20 by default, see module docstring for why).
+    RCSB template count prefers an exact, resolution-filtered `--fetch`/
+    `--fetch-all` count when available, but falls back to the cheap,
+    resolution-unfiltered `--pdb-count`/`--pdb-count-all` total so real
+    template availability can inform the ranking *before* any actual
+    structure download happens (see `_template_count`) -- the whole point
+    of ranking ahead of fetching. Rows where neither RCSB signal nor
+    `--chembl-activity` have been run yet (`pdb_structures`/`pdb_count`/
+    `chembl_targets` still `None`) are scored as if that count were 0
+    (class 1) -- "not yet checked" and "checked, found none" are
+    deliberately not distinguished here, unlike in `hits.json` itself,
+    since a ranking has to put every row somewhere."""
     out_dir = Path(out_dir)
     result = _load_hits_json(out_dir)
     seed = next(r for r in result["hits"] if r["role"] == "seed")
@@ -152,6 +174,7 @@ def rank_hits(out_dir: Union[str, Path], *, n_classes: int = N_CLASSES) -> List[
     identities = [r["pct_identity"] for r in hits]
     template_counts = [_template_count(r) or 0 for r in hits]
     activity_counts = [sum(t["n_activities"] for t in (r["chembl_targets"] or [])) for r in hits]
+    max_score = n_classes * count_classes * count_classes * n_classes
 
     ranked = []
     for r, n_templ, n_act in zip(hits, template_counts, activity_counts):
@@ -161,9 +184,10 @@ def rank_hits(out_dir: Union[str, Path], *, n_classes: int = N_CLASSES) -> List[
             n_activities=None if r["chembl_targets"] is None else n_act,
             family=r["family"],
             identity_class=classify_range(r["pct_identity"], identities, n_classes=n_classes),
-            templates_class=classify_zero_inflated(n_templ, template_counts, n_classes=n_classes),
-            activity_class=classify_zero_inflated(n_act, activity_counts, n_classes=n_classes),
+            templates_class=classify_zero_inflated(n_templ, template_counts, n_classes=count_classes),
+            activity_class=classify_zero_inflated(n_act, activity_counts, n_classes=count_classes),
             family_class=classify_family(r["family"], seed["family"], n_classes=n_classes),
+            max_score=max_score,
         ))
     ranked.sort(key=lambda h: h.score, reverse=True)
     return ranked
