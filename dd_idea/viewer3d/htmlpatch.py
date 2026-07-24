@@ -1,7 +1,7 @@
 """Plain string-patching helpers for a py3Dmol `_make_html()` scene, vendored
 verbatim from `dd_viewer.scene` (only these four functions -- the rest of
-that module builds a single-receptor/pose scene via rdkit, which dd_compare
-doesn't need; see `dd_compare/viewer3d/__init__.py`).
+that module builds a single-receptor/pose scene via rdkit, which dd_idea
+doesn't need; see `dd_idea/viewer3d/__init__.py`).
 """
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ def html_with_initial_view(html: str, view: list) -> str:
 def html_with_camera_events(html: str) -> str:
     """Patch a py3Dmol `_make_html()` string to report its camera state and
     render-readiness to the parent window via postMessage, for the
-    `dd_compare_3d` double-buffered component (`dd_compare.viewer3d.component`):
+    `dd_idea_3d` double-buffered component (`dd_idea.viewer3d.component`):
 
     - On every drag/zoom/touch, posts `{plviewerCameraUpdate: true, view:
       [...]}` (the 3Dmol `getView()` array). The component's own JS keeps

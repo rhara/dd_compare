@@ -1,7 +1,7 @@
 """Detect the reference protein's druggable pocket and map its lining
 residues onto every other protein's own numbering.
 
-Because dd_compare's representative structure is always the AlphaFold DB
+Because dd_idea's representative structure is always the AlphaFold DB
 model (see README "Why always AlphaFold"), every protein's structure residue
 number is identical to its own canonical UniProt sequence position: an
 AlphaFold model is built directly from the canonical sequence with no gaps,

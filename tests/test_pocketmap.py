@@ -1,8 +1,8 @@
 """Fast, offline unit tests for pocketmap.py's cross-protein pocket-residue
 classification (no fpocket/PyMOL -- `PocketSelection` is built by hand)."""
-from dd_compare.pocket import PocketSelection, Residue
-from dd_compare.pocketmap import compare_pocket
-from dd_compare.sequence import align_to_reference
+from dd_idea.pocket import PocketSelection, Residue
+from dd_idea.pocketmap import compare_pocket
+from dd_idea.sequence import align_to_reference
 
 REF_SEQ = "ACDEFGHIKLMNPQRSTVWY"
 

@@ -27,10 +27,10 @@ import os
 import streamlit.components.v1 as components
 
 _FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
-_component = components.declare_component("dd_compare_3d", path=_FRONTEND_DIR)
+_component = components.declare_component("dd_idea_3d", path=_FRONTEND_DIR)
 
 
-def view3d(html: str, height: int = 650, key: str = "dd_compare_3d_view", reset_camera_token: int = 0) -> None:
+def view3d(html: str, height: int = 650, key: str = "dd_idea_3d_view", reset_camera_token: int = 0) -> None:
     """Embed a py3Dmol scene's HTML (typically already passed through
     `htmlpatch.html_with_camera_events`) via the double-buffered component.
 

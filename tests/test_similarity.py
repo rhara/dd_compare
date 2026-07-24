@@ -1,7 +1,7 @@
 """Fast, offline unit tests for similarity.py's family-selection and
 candidate-ranking logic -- `fetch`'s network calls are all monkeypatched
 (no real UniProt access)."""
-from dd_compare import fetch, similarity
+from dd_idea import fetch, similarity
 
 SEQ = "ACDEFGHIKLMNPQRSTVWY"
 

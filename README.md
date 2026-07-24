@@ -1,6 +1,6 @@
 [Japanese version](README.jp.md)
 
-# dd_compare — Cross-protein sequence alignment meets pocket mapping: two or more UniProt accessions in, active-site divergence hints out
+# dd_idea — Cross-protein sequence alignment meets pocket mapping: two or more UniProt accessions in, active-site divergence hints out
 
 Given two or more UniProt accessions for *different* proteins (paralogs,
 off-targets, a kinase family), aligns their canonical sequences, maps one
@@ -21,7 +21,7 @@ Here there is no single shared canonical sequence -- each protein has its
 own -- so the reference's pocket, not a fixed set of canonical positions,
 is what gets translated across proteins.
 
-- **Fetch (`dd_compare-fetch`)**: canonical sequence + AlphaFold DB model
+- **Fetch (`dd_idea-fetch`)**: canonical sequence + AlphaFold DB model
   for each accession (skips anything already on disk on a re-run), plus
   (unless `--no-pdb-overlay`) looks up and selects each protein's real RCSB
   structures too (see "Real-structure overlay" below) -- all genuinely
@@ -29,8 +29,8 @@ is what gets translated across proteins.
   `--discover SEED_ACC` instead proposes candidate similar proteins for one
   seed accession (see "Similar-protein discovery" below) and writes
   `candidates.json` -- a proposal only; pick the accessions you actually
-  want and pass them to a normal `dd_compare-fetch` call.
-- **Align (`dd_compare-align`)**: picks a reference protein (default: the
+  want and pass them to a normal `dd_idea-fetch` call.
+- **Align (`dd_idea-align`)**: picks a reference protein (default: the
   first one fetched), runs `fpocket` on its AlphaFold model to detect a
   druggable pocket, pairwise-aligns every other protein's canonical
   sequence against the reference's (Biopython `PairwiseAligner`, BLOSUM62,
@@ -38,15 +38,15 @@ is what gets translated across proteins.
   pocket-lining residues onto each protein's own numbering. Each mapped
   position is classified `identical` / `conservative` / `non-conservative`
   / `gap` (BLOSUM62 score sign, not a hand-maintained substitution-group
-  table -- see `dd_compare/sequence.py`). Every protein's AlphaFold model,
-  and every real structure `dd_compare-fetch` already selected for it, is
+  table -- see `dd_idea/sequence.py`). Every protein's AlphaFold model,
+  and every real structure `dd_idea-fetch` already selected for it, is
   then superposed onto the reference via whole-chain PyMOL `cealign`
   (topology-only, no shared numbering needed -- unlike `dd_seqalign`'s other
   fit mode, this has no cross-protein equivalent of `pair_fit`). This step
   makes no RCSB network calls itself -- re-running align (e.g. to try a
   different `--reference`/`--pocket-rank`) only reuses what fetch already
   cached.
-- **Run (`dd_compare-run`)**: fetch + align in one step (explicit accession
+- **Run (`dd_idea-run`)**: fetch + align in one step (explicit accession
   list only -- run `--discover` separately first if you want suggestions).
 - **App (`streamlit run app.py -- --report-dir DIR`)**: four tabs --
   Overview (per-protein length/%identity/RMSD table), Active-site
@@ -69,7 +69,7 @@ is what gets translated across proteins.
 ## Worked example: CDK20 vs. CDK2 vs. MAK
 
 ```bash
-dd_compare-run Q8IZL9 P24941 P20794 -o data/example_cdk20_cdk2_mak --reference Q8IZL9
+dd_idea-run Q8IZL9 P24941 P20794 -o data/example_cdk20_cdk2_mak --reference Q8IZL9
 streamlit run app.py -- --report-dir data/example_cdk20_cdk2_mak
 ```
 
@@ -104,7 +104,7 @@ the seed itself). Every member's canonical sequence is then fetched and
 ranked by global BLOSUM62 %identity to the seed.
 
 **Known limitation**: this only finds proteins already classified in the
-*same* family as the seed. Running `dd_compare-fetch --discover Q8IZL9`
+*same* family as the seed. Running `dd_idea-fetch --discover Q8IZL9`
 correctly surfaces CDK2 (44.1% identity) among the top candidates, but
 *not* MAK -- MAK is a real, biologically relevant comparison (both
 kinases were studied together in this project's own worked example above)
@@ -121,21 +121,21 @@ name as seen by `pip`/`pip show` is `pymol`), and the `fpocket` CLI
 env:
 
 ```bash
-mamba create -n dd_compare -c conda-forge python=3.12 biopython pandas \
+mamba create -n dd_idea -c conda-forge python=3.12 biopython pandas \
     numpy matplotlib py3dmol streamlit pymol-open-source fpocket
-conda activate dd_compare
+conda activate dd_idea
 
-cd dd_compare && pip install --no-deps -e ".[app]"  # [app] adds streamlit/py3Dmol
+cd dd_idea && pip install --no-deps -e ".[app]"  # [app] adds streamlit/py3Dmol
 ```
 
-This installs three console commands: `dd_compare-fetch`, `dd_compare-align`,
-`dd_compare-run`.
+This installs three console commands: `dd_idea-fetch`, `dd_idea-align`,
+`dd_idea-run`.
 
 ## Usage
 
 ```bash
-dd_compare-fetch --discover Q8IZL9 -o data/discover   # optional: propose candidates for one seed
-dd_compare-run Q8IZL9 P24941 P20794 -o data --reference Q8IZL9
+dd_idea-fetch --discover Q8IZL9 -o data/discover   # optional: propose candidates for one seed
+dd_idea-run Q8IZL9 P24941 P20794 -o data --reference Q8IZL9
 streamlit run app.py -- --report-dir data
 ```
 
@@ -145,7 +145,7 @@ onto. `--pocket-rank` (default 1, top-ranked by fpocket's Druggability
 Score) picks a different pocket on the reference if the top one isn't the
 site of interest.
 
-`dd_compare-fetch`/`-run` additionally take (see "Real-structure overlay"
+`dd_idea-fetch`/`-run` additionally take (see "Real-structure overlay"
 below for what they control): `--no-pdb-overlay` skips the real-RCSB-
 structure lookup entirely (fetch/align only against AlphaFold models, as
 in earlier versions); `--pdb-max-structures N` (default 3) caps how many
@@ -157,16 +157,16 @@ and best-resolution-fallback paths; `--pdb-scan-cap N` (default 25) caps
 how many resolution-ranked candidates get checked for a bound ligand, at
 most, before giving up on finding `--pdb-max-structures` of them and
 falling back to the single best-resolution one, for a target with
-hundreds of structures. `dd_compare-align` doesn't take any of these --
+hundreds of structures. `dd_idea-align` doesn't take any of these --
 it never makes RCSB network calls itself, only reusing whatever
-`dd_compare-fetch` already cached (see below).
+`dd_idea-fetch` already cached (see below).
 
 All commands print one line per completed item as it happens; pass
 `--no-progress` to suppress this and only print the final summary.
 
 ## Real-structure overlay
 
-`dd_compare-fetch`/`-run` look up, for every protein, whether it has any
+`dd_idea-fetch`/`-run` look up, for every protein, whether it has any
 real RCSB structures at or better than `--pdb-resolution-cutoff` and -- if
 so -- select up to `--pdb-max-structures` of them, one per *distinct*
 bound ligand (not water/cryoprotectant/cofactor; the best-resolution entry
@@ -176,16 +176,16 @@ to the same cutoff) if none of the scanned candidates has a ligand at all
 -- recorded in `manifest.json`. This selection is genuinely fetch-time
 network work, cached exactly like the canonical-sequence/AlphaFold-model
 downloads: **want more real structures for a protein you already
-fetched?** just re-run `dd_compare-fetch` for the same `-o` directory with
+fetched?** just re-run `dd_idea-fetch` for the same `-o` directory with
 a larger `--pdb-max-structures` (and/or looser `--pdb-resolution-cutoff`)
 -- already-downloaded entries are reused, only the additional candidates
 needed get fetched:
 
 ```bash
-dd_compare-fetch Q8IZL9 P24941 P20794 -o data --pdb-max-structures 6
+dd_idea-fetch Q8IZL9 P24941 P20794 -o data --pdb-max-structures 6
 ```
 
-`dd_compare-align` then superposes every already-selected real structure
+`dd_idea-align` then superposes every already-selected real structure
 onto the reference alongside that protein's AlphaFold model, with no RCSB
 calls of its own. This is purely an *additional* visualization layer:
 pocket detection and the cross-protein sequence/pocket mapping stay
@@ -280,9 +280,9 @@ mid-way through setting up.
 - **No rdkit, no C++, no GPU**: this project has no small-molecule handling
   (unlike `dd_seqalign`, which vendors the now-retired `dd_viewer` project
   whole and therefore carries `rdkit` along for a single-receptor scene
-  builder dd_compare never uses -- only the plain string-patching +
+  builder dd_idea never uses -- only the plain string-patching +
   component pieces of `dd_viewer` are vendored here, directly from that
-  now-retired project, see `dd_compare/viewer3d/__init__.py`). Its own
+  now-retired project, see `dd_idea/viewer3d/__init__.py`). Its own
   work is REST fetches and sequence alignment (both cheap) plus
   delegating anything heavier to already-compiled tools (`fpocket`, PyMOL's
   C++ core) -- there's no hot numeric loop of this project's own worth

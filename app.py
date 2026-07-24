@@ -1,7 +1,7 @@
-"""Streamlit UI for dd_compare.
+"""Streamlit UI for dd_idea.
 
-Run with `streamlit run app.py -- --report-dir data` (after `dd_compare-run`/
-`dd_compare-fetch`+`dd_compare-align` have populated that directory with
+Run with `streamlit run app.py -- --report-dir data` (after `dd_idea-run`/
+`dd_idea-fetch`+`dd_idea-align` have populated that directory with
 `report.json` and `aligned/*_aligned.pdb`), or just `streamlit run app.py`
 and enter the directory in the sidebar.
 """
@@ -12,10 +12,10 @@ from pathlib import Path
 
 import streamlit as st
 
-from dd_compare import dashboard, scene
-from dd_compare.viewer3d import html_with_camera_events, view3d
+from dd_idea import dashboard, scene
+from dd_idea.viewer3d import html_with_camera_events, view3d
 
-st.set_page_config(page_title="dd_compare", layout="wide")
+st.set_page_config(page_title="dd_idea", layout="wide")
 
 CONSERVATION_COLORS = {
     "identical": "#c8e6c9",
@@ -45,7 +45,7 @@ def _load_json_fresh(path: Path) -> dict:
     """`_load_json`, but keyed on the file's current mtime too -- a plain
     `@st.cache_data` keyed on `path` alone keeps serving the *first*
     version ever loaded for that path, forever, even after re-running
-    `dd_compare-fetch`/`-align` writes a new `report.json` to the same
+    `dd_idea-fetch`/`-align` writes a new `report.json` to the same
     file while this app's own process keeps running (Streamlit has no way
     to know the file changed otherwise). Re-fetching more real structures
     into an already-open report directory is an explicitly supported
@@ -56,15 +56,15 @@ def _load_json_fresh(path: Path) -> dict:
 
 def main() -> None:
     defaults = _parse_cli_defaults()
-    st.title("dd_compare -- cross-protein structure & active-site comparison")
+    st.title("dd_idea -- cross-protein structure & active-site comparison")
 
     with st.sidebar:
         st.header("Report")
-        report_dir = st.text_input("Report directory (dd_compare-run/-align output)", value=defaults.report_dir or "data")
+        report_dir = st.text_input("Report directory (dd_idea-run/-align output)", value=defaults.report_dir or "data")
 
     report_path = Path(report_dir) / "report.json"
     if not report_path.exists():
-        st.info(f"No report.json found in {report_dir!r}. Run `dd_compare-run ACC1 ACC2 [...] -o {report_dir}` first.")
+        st.info(f"No report.json found in {report_dir!r}. Run `dd_idea-run ACC1 ACC2 [...] -o {report_dir}` first.")
         st.stop()
 
     report = _load_json_fresh(report_path)

@@ -1,8 +1,8 @@
 """Command-line entry points:
-  dd_compare-fetch  ACC [ACC ...] -o out_dir
-  dd_compare-fetch  --discover SEED_ACC -o out_dir   (writes candidates.json only)
-  dd_compare-align  out_dir --reference ACC
-  dd_compare-run    ACC [ACC ...] -o out_dir --reference ACC
+  dd_idea-fetch  ACC [ACC ...] -o out_dir
+  dd_idea-fetch  --discover SEED_ACC -o out_dir   (writes candidates.json only)
+  dd_idea-align  out_dir --reference ACC
+  dd_idea-run    ACC [ACC ...] -o out_dir --reference ACC
 """
 from __future__ import annotations
 
@@ -13,8 +13,8 @@ from . import pipeline
 
 def _add_pdb_fetch_args(parser: argparse.ArgumentParser) -> None:
     """Real-RCSB-structure lookup/selection flags -- genuinely fetch-time
-    network work (see `pipeline.fetch_all`), so shared by `dd_compare-fetch`
-    and `dd_compare-run` only, not `dd_compare-align` (which just reuses
+    network work (see `pipeline.fetch_all`), so shared by `dd_idea-fetch`
+    and `dd_idea-run` only, not `dd_idea-align` (which just reuses
     whatever was already fetched, with no network access -- re-running
     align never re-hits RCSB, so it has nothing to configure here)."""
     parser.add_argument(
@@ -48,7 +48,7 @@ def _add_pdb_fetch_args(parser: argparse.ArgumentParser) -> None:
 
 def build_fetch_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="dd_compare-fetch",
+        prog="dd_idea-fetch",
         description="Download the canonical sequence + AlphaFold DB model for two or more UniProt accessions, "
                     "or (with --discover) propose candidate similar proteins for one seed accession.",
     )
@@ -78,21 +78,21 @@ def _add_align_args(parser: argparse.ArgumentParser) -> None:
 
 def build_align_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="dd_compare-align",
+        prog="dd_idea-align",
         description="Detect the reference protein's druggable pocket, align every other protein's sequence to it "
                     "and map the pocket onto each, then superpose every protein's AlphaFold model (and any real "
-                    "RCSB structures dd_compare-fetch already selected) onto the reference.",
+                    "RCSB structures dd_idea-fetch already selected) onto the reference.",
     )
-    parser.add_argument("out_dir", help="Directory previously populated by dd_compare-fetch")
+    parser.add_argument("out_dir", help="Directory previously populated by dd_idea-fetch")
     _add_align_args(parser)
     return parser
 
 
 def build_run_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="dd_compare-run",
-        description="dd_compare-fetch followed by dd_compare-align in one step (explicit accession list only -- "
-                    "run dd_compare-fetch --discover separately first if you want candidate suggestions).",
+        prog="dd_idea-run",
+        description="dd_idea-fetch followed by dd_idea-align in one step (explicit accession list only -- "
+                    "run dd_idea-fetch --discover separately first if you want candidate suggestions).",
     )
     parser.add_argument("accessions", nargs="+", help="UniProt accessions, e.g. Q8IZL9 P24941 P20794")
     parser.add_argument("-o", "--out-dir", required=True, help="Output directory")
@@ -117,7 +117,7 @@ def main_fetch(argv=None) -> None:
         return
 
     if len(args.accessions) < 2:
-        raise SystemExit("dd_compare-fetch: pass at least 2 accessions to compare, or --discover SEED_ACC")
+        raise SystemExit("dd_idea-fetch: pass at least 2 accessions to compare, or --discover SEED_ACC")
     manifest = pipeline.fetch_all(
         args.accessions, args.out_dir, show_progress=not args.no_progress,
         pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap,
@@ -137,7 +137,7 @@ def main_align(argv=None) -> None:
 def main_run(argv=None) -> None:
     args = build_run_parser().parse_args(argv)
     if len(args.accessions) < 2:
-        raise SystemExit("dd_compare-run: pass at least 2 accessions to compare")
+        raise SystemExit("dd_idea-run: pass at least 2 accessions to compare")
     pipeline.fetch_all(
         args.accessions, args.out_dir, show_progress=not args.no_progress,
         pdb_overlay=not args.no_pdb_overlay, pdb_scan_cap=args.pdb_scan_cap,

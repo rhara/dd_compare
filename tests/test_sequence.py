@@ -1,6 +1,6 @@
 """Fast, offline unit tests for sequence.py's cross-protein alignment logic
 (no network, no PyMOL/fpocket)."""
-from dd_compare.sequence import align_to_reference, conservation, percent_identity
+from dd_idea.sequence import align_to_reference, conservation, percent_identity
 
 REF = "ACDEFGHIKLMNPQRSTVWY"  # the 20 standard amino acids, each once, in a fixed order
 

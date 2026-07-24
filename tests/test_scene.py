@@ -2,7 +2,7 @@
 covered: build_overlay_view's actual rendered py3Dmol/WebGL output, per
 this project family's manual-only convention for that side of things
 (see dd_seqalign's own test_scene.py)."""
-from dd_compare.scene import PALETTE, PDB_PALETTE, _readable_font_color
+from dd_idea.scene import PALETTE, PDB_PALETTE, _readable_font_color
 
 
 def test_readable_font_color_picks_black_on_light_backgrounds():

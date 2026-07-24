@@ -1,9 +1,9 @@
 """Minimal fixed-column PDB parsing and HETATM classification, vendored
 verbatim (not imported) from `dd_seqalign.pdbio` -- itself originally
-vendored from `dd_prep.parse`/`dd_prep.hetero`. dd_compare only needs a
+vendored from `dd_prep.parse`/`dd_prep.hetero`. dd_idea only needs a
 handful of read-only helpers (ligand-of-interest picking for the optional
 "pin a specific PDB" override), and duplicating them here (instead of
-depending on any sibling `dd_*` package) keeps dd_compare installable on its
+depending on any sibling `dd_*` package) keeps dd_idea installable on its
 own, following this whole project family's established convention. No
 external dependency, plain text.
 """

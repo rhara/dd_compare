@@ -5,10 +5,10 @@ they cover (from dd_seqalign.sequence's own test_sequence.py -- see
 pdbstruct.py's module docstring), following this project family's standing
 pattern of porting a vendored module's test coverage, not just its code.
 `select_pdb_structures`'s ligand-diversity/resolution-fallback decision is
-new to dd_compare, tested here with the network calls mocked out."""
+new to dd_idea, tested here with the network calls mocked out."""
 from unittest.mock import patch
 
-from dd_compare.pdbstruct import (
+from dd_idea.pdbstruct import (
     ChainSequence,
     EntryMetadata,
     align_to_canonical,
@@ -107,9 +107,9 @@ def test_select_pdb_structures_prefers_ligand_bound_over_better_resolution(tmp_p
         dest.write_text(pdb_text[pdb_id])
         return pdb_text[pdb_id]
 
-    with patch("dd_compare.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
-         patch("dd_compare.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
-         patch("dd_compare.pdbstruct.download_pdb", side_effect=fake_download):
+    with patch("dd_idea.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
+         patch("dd_idea.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
+         patch("dd_idea.pdbstruct.download_pdb", side_effect=fake_download):
         sels = select_pdb_structures("P00000", "A", tmp_path, scan_cap=10, show_progress=False)
 
     assert [s.pdb_id for s in sels] == ["3XYZ"]
@@ -128,9 +128,9 @@ def test_select_pdb_structures_falls_back_to_best_resolution_when_all_apo(tmp_pa
         dest.write_text(_APO_PDB)
         return _APO_PDB
 
-    with patch("dd_compare.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
-         patch("dd_compare.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
-         patch("dd_compare.pdbstruct.download_pdb", side_effect=fake_download):
+    with patch("dd_idea.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
+         patch("dd_idea.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
+         patch("dd_idea.pdbstruct.download_pdb", side_effect=fake_download):
         sels = select_pdb_structures("P00000", "A", tmp_path, scan_cap=10, show_progress=False)
 
     assert len(sels) == 1
@@ -157,9 +157,9 @@ def test_select_pdb_structures_excludes_worse_than_resolution_cutoff(tmp_path):
         dest.write_text(pdb_text[pdb_id])
         return pdb_text[pdb_id]
 
-    with patch("dd_compare.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
-         patch("dd_compare.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
-         patch("dd_compare.pdbstruct.download_pdb", side_effect=fake_download):
+    with patch("dd_idea.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
+         patch("dd_idea.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
+         patch("dd_idea.pdbstruct.download_pdb", side_effect=fake_download):
         sels = select_pdb_structures("P00000", "A", tmp_path, scan_cap=10, show_progress=False)
 
     assert [s.pdb_id for s in sels] == ["2BBB"]
@@ -173,8 +173,8 @@ def test_select_pdb_structures_excludes_unreported_resolution(tmp_path):
     ids = ["1NMR"]
     metadata = {"1NMR": EntryMetadata(pdb_id="1NMR", method="NMR", resolution=None, title="")}
 
-    with patch("dd_compare.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
-         patch("dd_compare.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]):
+    with patch("dd_idea.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
+         patch("dd_idea.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]):
         sels = select_pdb_structures(
             "P00000", "A", tmp_path, scan_cap=10, resolution_cutoff=100.0, show_progress=False,
         )
@@ -194,9 +194,9 @@ def test_select_pdb_structures_resolution_cutoff_is_configurable(tmp_path):
         dest.write_text(pdb_text[pdb_id])
         return pdb_text[pdb_id]
 
-    with patch("dd_compare.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
-         patch("dd_compare.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
-         patch("dd_compare.pdbstruct.download_pdb", side_effect=fake_download):
+    with patch("dd_idea.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
+         patch("dd_idea.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
+         patch("dd_idea.pdbstruct.download_pdb", side_effect=fake_download):
         sels = select_pdb_structures(
             "P00000", "A", tmp_path, scan_cap=10, resolution_cutoff=3.5, show_progress=False,
         )
@@ -205,7 +205,7 @@ def test_select_pdb_structures_resolution_cutoff_is_configurable(tmp_path):
 
 
 def test_select_pdb_structures_returns_empty_when_no_structures_exist(tmp_path):
-    with patch("dd_compare.pdbstruct.list_pdb_ids_for_uniprot", return_value=[]):
+    with patch("dd_idea.pdbstruct.list_pdb_ids_for_uniprot", return_value=[]):
         sels = select_pdb_structures("P00000", "A", tmp_path, show_progress=False)
     assert sels == []
 
@@ -230,9 +230,9 @@ def test_select_pdb_structures_collects_multiple_distinct_ligands_up_to_cap(tmp_
         dest.write_text(pdb_text[pdb_id])
         return pdb_text[pdb_id]
 
-    with patch("dd_compare.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
-         patch("dd_compare.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
-         patch("dd_compare.pdbstruct.download_pdb", side_effect=fake_download):
+    with patch("dd_idea.pdbstruct.list_pdb_ids_for_uniprot", return_value=ids), \
+         patch("dd_idea.pdbstruct.fetch_entry_metadata", side_effect=lambda pid: metadata[pid]), \
+         patch("dd_idea.pdbstruct.download_pdb", side_effect=fake_download):
         sels = select_pdb_structures(
             "P00000", "A", tmp_path, scan_cap=10, max_structures=3, resolution_cutoff=10.0, show_progress=False,
         )  # resolution_cutoff loosened -- this test is about dedup/cap logic, not resolution filtering

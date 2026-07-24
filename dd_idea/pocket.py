@@ -1,10 +1,10 @@
 """Druggable pocket detection via fpocket, vendored verbatim (not imported)
 from `dd_seqalign.pocket` -- itself originally vendored from
-`dd_afpocket.pocket`. dd_compare only ever calls `find_druggable_pocket`
+`dd_afpocket.pocket`. dd_idea only ever calls `find_druggable_pocket`
 (with `show_progress=False`) on the reference protein's AlphaFold model, so
 depending on the whole dd_afpocket package just for this one entry point
-would pull in unrelated MD-sampling/clustering code dd_compare never uses.
-Duplicating the pocket-detection slice here keeps dd_compare installable on
+would pull in unrelated MD-sampling/clustering code dd_idea never uses.
+Duplicating the pocket-detection slice here keeps dd_idea installable on
 its own, following this whole project family's established convention.
 
 fpocket (https://github.com/Discngine/fpocket, `conda install -c

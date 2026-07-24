@@ -1,5 +1,5 @@
 [project]
-name = "dd_compare"
+name = "dd_idea"
 version = "0.1.0"
 description = "Cross-protein comparison: given two or more UniProt accessions, align their canonical sequences, map one reference's druggable pocket onto every other protein, and superpose their AlphaFold DB models for visual drug-discovery hint-hunting"
 readme = "README.md"
@@ -11,16 +11,16 @@ dependencies = ["biopython", "pandas", "numpy", "pymol"]
 app = ["streamlit", "py3Dmol"]
 
 [project.scripts]
-dd_compare-fetch = "dd_compare.cli:main_fetch"
-dd_compare-align = "dd_compare.cli:main_align"
-dd_compare-run = "dd_compare.cli:main_run"
+dd_idea-fetch = "dd_idea.cli:main_fetch"
+dd_idea-align = "dd_idea.cli:main_align"
+dd_idea-run = "dd_idea.cli:main_run"
 
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["dd_compare", "dd_compare.viewer3d"]
+packages = ["dd_idea", "dd_idea.viewer3d"]
 
 [tool.setuptools.package-data]
-"dd_compare.viewer3d" = ["frontend/*.html"]
+"dd_idea.viewer3d" = ["frontend/*.html"]

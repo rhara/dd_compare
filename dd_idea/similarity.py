@@ -81,7 +81,7 @@ def discover(
         raise ValueError(
             f"{seed_accession}: every cross-referenced Pfam/InterPro family resolves to just this "
             f"protein itself -- nothing to compare against automatically. Pass an explicit accession "
-            f"list to `dd_compare-fetch` instead."
+            f"list to `dd_idea-fetch` instead."
         )
     if show_progress:
         print(

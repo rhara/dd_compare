@@ -1,10 +1,10 @@
 """UniProt entry/sequence and AlphaFold DB model fetching. The AFDB
 download/URL-resolution functions are vendored from `dd_seqalign.fetch`
-(itself vendored from `dd_prep.fetch`) -- dd_compare only needs these two
+(itself vendored from `dd_prep.fetch`) -- dd_idea only needs these two
 small stdlib-only functions plus the UniProt REST calls this module adds
 (entry JSON, for the protein name and family cross-references
 `similarity.py` needs), not the RCSB/PDB-entry lookups `dd_seqalign.fetch`
-also has (dd_compare's representative structure is always the AlphaFold
+also has (dd_idea's representative structure is always the AlphaFold
 model -- see README "Why always AlphaFold, never a PDB structure").
 """
 from __future__ import annotations

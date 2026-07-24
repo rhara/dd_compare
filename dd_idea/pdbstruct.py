@@ -23,7 +23,7 @@ the right chain out of a real PDB entry that may contain bound partners
 additionally provides the canonical-position round-trip
 (`ChainAlignment.resseq_for_canonical`) needed to place reference pocket-
 residue labels onto a PDB entry's own (non-canonical) numbering -- something
-`dd_compare`'s AlphaFold-only path never needed, since an AlphaFold model's
+`dd_idea`'s AlphaFold-only path never needed, since an AlphaFold model's
 numbering already equals canonical UniProt position by construction.
 """
 from __future__ import annotations
