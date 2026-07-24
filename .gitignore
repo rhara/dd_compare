@@ -12,3 +12,9 @@ data/
 # files) -- fully regenerable via `dd_idea-align`; the pocket actually
 # selected is already captured in report.json's "pocket" field.
 CDK20_inhibition/**/pocket/
+
+# dd_idea-search's raw BLAST XML / downloaded RCSB structures -- both fully
+# regenerable via `dd_idea-search`/`--fetch` (see hits.json for what was
+# found/selected); a well-studied BLAST hit can mean hundreds of PDB files.
+CDK20_inhibition/**/raw_blast/
+CDK20_inhibition/**/raw_pdb/

@@ -24,7 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Optional
 
-from . import fetch
+from . import uniprot
 from .sequence import percent_identity
 
 
@@ -44,8 +44,8 @@ def choose_family(entry: dict, *, taxon_id: Optional[int], show_progress: bool =
     id. Returns None if every cross-referenced family resolves to just the
     seed itself (nothing to compare against)."""
     scored = []
-    for db, fid, name in fetch.family_cross_references(entry):
-        count = fetch.count_family_members(db, fid, taxon_id=taxon_id)
+    for db, fid, name in uniprot.family_cross_references(entry):
+        count = uniprot.count_family_members(db, fid, taxon_id=taxon_id)
         scored.append((count, db, fid, name))
         if show_progress:
             print(f"[discover] candidate family {db}:{fid} ({name}): {count} member(s)", flush=True)
@@ -72,9 +72,9 @@ def discover(
     proposal step (writes `candidates.json`); the caller decides which
     candidates to actually pass to `pipeline.fetch_all`."""
     seed_accession = seed_accession.upper()
-    seed_entry = fetch.fetch_uniprot_entry(seed_accession)
-    seed_seq = fetch.fetch_uniprot_fasta(seed_accession)
-    taxon_id = None if any_organism else fetch.organism_taxon_id(seed_entry)
+    seed_entry = uniprot.fetch_uniprot_entry(seed_accession)
+    seed_seq = uniprot.fetch_uniprot_fasta(seed_accession)
+    taxon_id = None if any_organism else uniprot.organism_taxon_id(seed_entry)
 
     family = choose_family(seed_entry, taxon_id=taxon_id, show_progress=show_progress)
     if family is None:
@@ -89,7 +89,7 @@ def discover(
             f"({family.entry_name}), {family.member_count} member(s)", flush=True,
         )
 
-    member_accessions = fetch.list_family_members(
+    member_accessions = uniprot.list_family_members(
         family.database, family.family_id, taxon_id=taxon_id, limit=max(family.member_count, max_candidates),
     )
     member_accessions = [a for a in member_accessions if a.upper() != seed_accession]
@@ -97,14 +97,14 @@ def discover(
     candidates: List[Candidate] = []
     for i, acc in enumerate(member_accessions, start=1):
         try:
-            seq = fetch.fetch_uniprot_fasta(acc)
-            entry = fetch.fetch_uniprot_entry(acc)
+            seq = uniprot.fetch_uniprot_fasta(acc)
+            entry = uniprot.fetch_uniprot_entry(acc)
         except Exception as e:
             if show_progress:
                 print(f"[discover] ({i}/{len(member_accessions)}) {acc}: skipped ({e})", flush=True)
             continue
         pct = percent_identity(seed_seq, seq)
-        name = fetch.protein_name(entry)
+        name = uniprot.protein_name(entry)
         candidates.append(Candidate(accession=acc, name=name, length=len(seq), pct_identity=pct))
         if show_progress:
             print(f"[discover] ({i}/{len(member_accessions)}) {acc} ({name}): {pct:.1f}% identity to seed", flush=True)
@@ -114,7 +114,7 @@ def discover(
 
     return {
         "seed_accession": seed_accession,
-        "seed_name": fetch.protein_name(seed_entry),
+        "seed_name": uniprot.protein_name(seed_entry),
         "family_database": family.database,
         "family_id": family.family_id,
         "family_entry_name": family.entry_name,

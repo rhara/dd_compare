@@ -14,13 +14,17 @@ app = ["streamlit", "py3Dmol"]
 dd_idea-fetch = "dd_idea.cli:main_fetch"
 dd_idea-align = "dd_idea.cli:main_align"
 dd_idea-run = "dd_idea.cli:main_run"
+dd_idea-search = "dd_idea.cli:main_search"
 
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["dd_idea", "dd_idea.viewer3d"]
+packages = [
+    "dd_idea", "dd_idea.viewer3d",
+    "dd_idea.chembl", "dd_idea.blast", "dd_idea.uniprot", "dd_idea.alphafold", "dd_idea.rcsb",
+]
 
 [tool.setuptools.package-data]
 "dd_idea.viewer3d" = ["frontend/*.html"]

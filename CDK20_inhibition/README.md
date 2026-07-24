@@ -22,10 +22,23 @@ this repo, or in any other `dd_*` project's own directory.
   0.646, positions 14/131 non-conservative in both CDK2 and MAK (candidate
   CDK20-selectivity residues).
 
+- `pocket_detection/` -- output of `dd_idea-search Q8IZL9 -o
+  CDK20_inhibition/pocket_detection` (see [`../README.md`](../README.md#dd_idea-search-blast-based-entry-point)):
+  CDK20 has zero RCSB structures of its own, so real structural templates
+  for pocket detection/restrained-MD come from BLASTP-similar proteins
+  instead -- `hits.json` has 100 Swiss-Prot hits (Homo sapiens, ranked by
+  %identity), each with UniProt family/gene/organism metadata. Templates
+  (AlphaFold model + RCSB structures) are fetched selectively per
+  accession via `dd_idea-search --fetch ACC [ACC ...] -o
+  pocket_detection --resolution-cutoff N`, not all at once -- see
+  `hits.json`'s `pdb_structures` field per row (`null` = not fetched yet).
+
 ## Next steps (not yet done)
 
-Pocket detection/restrained-MD ensemble generation (`dd_afpocket`), docking
-(`dd_docking`), and QSAR (`dd_chembl`) stages for CDK20 have not been run
-yet as part of this project -- when they are, their outputs belong here too
-(e.g. `pocket_detection/`, `docking/`, `qsar/`), not inside those tools'
-own repos.
+Pick which `pocket_detection/hits.json` accessions are actually worth
+fetching templates for (top hits: CDK5 46.0%, CDK3 45.3%, CDK2 43.8%,
+CDK7 43.1%, CDK1 43.1%; MAK 35.1% at rank 24 -- found here despite being
+invisible to `dd_idea`'s Pfam/InterPro-based `--discover`), run
+`dd_afpocket`'s pocket detection/restrained-MD ensemble generation,
+then docking (`dd_docking`) and QSAR (`dd_chembl`) -- their outputs belong
+here too (e.g. `docking/`, `qsar/`), not inside those tools' own repos.

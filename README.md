@@ -112,7 +112,39 @@ correctly surfaces CDK2 (44.1% identity) among the top candidates, but
 kinases were studied together in this project's own worked example above)
 but isn't cross-referenced to the CDK family in InterPro, so it never
 enters the candidate pool. Cross-family comparisons like CDK20-vs-MAK need
-an explicit accession list.
+an explicit accession list -- or see `dd_idea-search` below, which finds
+MAK directly since it doesn't depend on family classification at all.
+
+## `dd_idea-search`: BLAST-based entry point
+
+A different, complementary way to find similar proteins and pull together
+pocket-detection inputs for a new target -- BLASTP against Swiss-Prot
+instead of Pfam/InterPro family membership, so it isn't subject to
+`--discover`'s known limitation above (it finds MAK for CDK20, at 35.1%
+local identity, rank 24 among Homo sapiens Swiss-Prot hits). Takes a
+UniProt accession, a ChEMBL target ID (e.g. `CHEMBL301`), or a raw
+amino-acid sequence pasted directly -- useful when starting from a ChEMBL
+target of interest or a sequence that isn't in UniProt yet.
+
+Two explicit steps, deliberately not one: build the table first (fast,
+no downloads), review it, then fetch AlphaFold models/RCSB structures only
+for the accessions actually worth it.
+
+```bash
+dd_idea-search Q8IZL9 -o CDK20_inhibition/pocket_detection
+# -> prints a full table (Family/Gene/Organism/Length/%Id/E-value), no downloads
+
+dd_idea-search --fetch P24941 P20794 -o CDK20_inhibition/pocket_detection --resolution-cutoff 2.5
+# -> AlphaFold model (if it's the seed) + every RCSB structure <= 2.5Å for just those two
+
+dd_idea-search --fetch-all -o CDK20_inhibition/pocket_detection --resolution-cutoff 2.5
+# -> same, for every row in the table (can mean hundreds of structures for a well-studied hit -- see below)
+```
+
+A well-studied hit can have hundreds of RCSB entries (CDK2 alone: 512
+total, ~450 at <=2.5Å) -- `--fetch`ing everything indiscriminately isn't
+usually what you want; `--fetch` a short, deliberate list instead of
+reaching for `--fetch-all`.
 
 ## Installation
 

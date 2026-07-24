@@ -24,7 +24,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
-from . import fetch, pdbstruct, pocketmap, sequence, similarity, structalign
+from . import alphafold, pocketmap, rcsb, sequence, similarity, structalign, uniprot
 
 AFDB_CHAIN = "A"  # every AlphaFold DB model is a single chain, always "A"
 
@@ -40,7 +40,7 @@ def fetch_all(
 ) -> dict:
     """Download every protein's canonical sequence + AlphaFold DB model,
     and (unless `pdb_overlay` is False) look up and select its real RCSB
-    structures too (see `pdbstruct.select_pdb_structures`). Cached:
+    structures too (see `rcsb.select_pdb_structures`). Cached:
     re-running against the same `out_dir` skips anything already on disk
     -- including individual real-structure downloads, so raising
     `pdb_max_structures` or loosening `pdb_resolution_cutoff` on a later
@@ -54,8 +54,8 @@ def fetch_all(
     proteins: List[dict] = []
     for i, accession in enumerate(accessions, start=1):
         acc = accession.upper()
-        entry = fetch.fetch_uniprot_entry(acc)
-        name = fetch.protein_name(entry)
+        entry = uniprot.fetch_uniprot_entry(acc)
+        name = uniprot.protein_name(entry)
 
         fasta_dest = out_dir / f"{acc}.fasta"
         if fasta_dest.exists():
@@ -63,14 +63,14 @@ def fetch_all(
             if show_progress:
                 print(f"[fetch] ({i}/{len(accessions)}) {acc}: canonical sequence already downloaded, skipping", flush=True)
         else:
-            canonical = fetch.fetch_uniprot_fasta(acc)
+            canonical = uniprot.fetch_uniprot_fasta(acc)
             fasta_dest.write_text(f">{acc}\n{canonical}\n")
             if show_progress:
                 print(f"[fetch] ({i}/{len(accessions)}) {acc} ({name}): canonical sequence ({len(canonical)} aa)", flush=True)
 
         afdb_dest = raw_dir / f"{acc}_AFDB.pdb"
         already_had_it = afdb_dest.exists()
-        fetch.download_afdb(acc, afdb_dest)
+        alphafold.download_afdb(acc, afdb_dest)
         if show_progress:
             status = "already downloaded, skipping" if already_had_it else "-> " + afdb_dest.name
             print(f"[fetch] ({i}/{len(accessions)}) {acc}: AlphaFold DB model {status}", flush=True)
@@ -78,7 +78,7 @@ def fetch_all(
         pdb_structures: List[dict] = []
         if pdb_overlay:
             try:
-                selections = pdbstruct.select_pdb_structures(
+                selections = rcsb.select_pdb_structures(
                     acc, canonical, out_dir / "raw_pdb", scan_cap=pdb_scan_cap,
                     max_structures=pdb_max_structures, resolution_cutoff=pdb_resolution_cutoff,
                     show_progress=show_progress,
@@ -188,12 +188,12 @@ def analyze(
         )
     }
 
-    pdb_selections: Dict[str, List[pdbstruct.SelectedPdbStructure]] = {}
+    pdb_selections: Dict[str, List[rcsb.SelectedPdbStructure]] = {}
     for acc, info in proteins.items():
         sels = []
         for cached in info.get("pdb_structures") or []:
             try:
-                sels.append(pdbstruct.rehydrate_selection(
+                sels.append(rcsb.rehydrate_selection(
                     acc, canonical_by_acc[acc], pdb_id=cached["pdb_id"], resolution=cached["resolution"],
                     chain_id=cached["chain"], pdb_path=cached["pdb_path"], ligand_resname=cached["ligand_resname"],
                 ))
@@ -201,7 +201,7 @@ def analyze(
                 if show_progress:
                     print(f"[align] {acc}: couldn't reload cached real structure {cached.get('pdb_id')} ({e}), skipping", flush=True)
         pdb_selections[acc] = sels
-    pdb_overlay_results = pdbstruct.align_pdb_overlays(
+    pdb_overlay_results = rcsb.align_pdb_overlays(
         proteins[reference]["afdb_path"], reference, pdb_selections,
         out_dir / "aligned_pdb", show_progress=show_progress,
     )

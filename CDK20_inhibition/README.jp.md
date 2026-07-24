@@ -20,9 +20,24 @@
   druggability 0.646、位置14・131がCDK2・MAK両方でnon-conservative
   (CDK20選択性を持つ候補残基)。
 
+- `pocket_detection/` —— `dd_idea-search Q8IZL9 -o
+  CDK20_inhibition/pocket_detection`の出力(詳細は
+  [`../README.jp.md`](../README.jp.md#dd_idea-search-blastベースの入口ツール)参照)。
+  CDK20自身はRCSB構造を1件も持たないため、実構造のテンプレートは
+  BLASTPで見つけた類似蛋白から取得する——`hits.json`にHomo sapiens限定
+  Swiss-Protヒット100件(同一性順)、各行にUniProt family/gene/organism
+  メタデータ付き。テンプレート(AlphaFoldモデル+RCSB構造)は
+  `dd_idea-search --fetch ACC [ACC ...] -o pocket_detection
+  --resolution-cutoff N`でアクセッションごとに選択的に取得する(一括では
+  ない)——`hits.json`の各行の`pdb_structures`フィールド参照
+  (`null`=未取得)。
+
 ## 今後の予定(未着手)
 
-ポケット検出/局所拘束MDアンサンブル生成(`dd_afpocket`)、ドッキング
-(`dd_docking`)、QSAR(`dd_chembl`)の各段階はこのプロジェクトとしてはまだ
-実行していない——実行した際の出力もここに置く(例: `pocket_detection/`、
-`docking/`、`qsar/`)、各ツール自身のレポジトリには置かない。
+`pocket_detection/hits.json`のどのアクセッションが実際にテンプレート
+取得の価値があるか選定する(上位: CDK5 46.0%、CDK3 45.3%、CDK2 43.8%、
+CDK7 43.1%、CDK1 43.1%。MAKは35.1%で24位——`dd_idea`のPfam/InterPro
+ベース`--discover`では見えないがここでは発見できた)。続いて
+`dd_afpocket`のポケット検出/局所拘束MDアンサンブル生成、ドッキング
+(`dd_docking`)、QSAR(`dd_chembl`)——実行した際の出力もここに置く
+(例: `docking/`、`qsar/`)、各ツール自身のレポジトリには置かない。
