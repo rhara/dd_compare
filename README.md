@@ -126,9 +126,10 @@ UniProt accession, a ChEMBL target ID (e.g. `CHEMBL301`), or a raw
 amino-acid sequence pasted directly -- useful when starting from a ChEMBL
 target of interest or a sequence that isn't in UniProt yet.
 
-Two explicit steps, deliberately not one: build the table first (fast,
-no downloads), review it, then fetch AlphaFold models/RCSB structures only
-for the accessions actually worth it.
+Three explicit steps, deliberately not one: build the table first (fast,
+no downloads), review it, then fetch AlphaFold models/RCSB structures
+and/or count ChEMBL bioactivity data only for the accessions actually
+worth it.
 
 ```bash
 dd_idea-search Q8IZL9 -o CDK20_inhibition/pocket_detection
@@ -139,12 +140,24 @@ dd_idea-search --fetch P24941 P20794 -o CDK20_inhibition/pocket_detection --reso
 
 dd_idea-search --fetch-all -o CDK20_inhibition/pocket_detection --resolution-cutoff 2.5
 # -> same, for every row in the table (can mean hundreds of structures for a well-studied hit -- see below)
+
+dd_idea-search --chembl-activity-all -o CDK20_inhibition/pocket_detection
+# -> resolves each row's ChEMBL SINGLE PROTEIN target(s) and counts binding-assay
+#    activities with a pChEMBL value (same filter dd_chembl itself uses for QSAR
+#    training data) -- cheap (counts only, one request per target, no bioactivity
+#    data actually downloaded), so --all is reasonable here unlike --fetch-all
 ```
 
 A well-studied hit can have hundreds of RCSB entries (CDK2 alone: 512
 total, ~450 at <=2.5Å) -- `--fetch`ing everything indiscriminately isn't
 usually what you want; `--fetch` a short, deliberate list instead of
-reaching for `--fetch-all`.
+reaching for `--fetch-all`. `--chembl-activity` has no equivalent cost
+concern (a handful of small REST calls per accession), so `--chembl-activity-all`
+is fine as a default first pass -- e.g. for CDK20's 100 BLAST hits, this
+surfaced a >3000x spread in ChEMBL coverage (GSK3B: 7448 activities;
+CDK20 itself: 1) worth knowing about before deciding which hits are
+useful pocket-detection templates *and* have enough SAR data for follow-up
+QSAR work.
 
 ## Installation
 

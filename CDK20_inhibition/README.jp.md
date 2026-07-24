@@ -22,10 +22,28 @@
   テンプレートはBLASTPで見つけた類似蛋白から取得する。`hits.json`に
   Homo sapiens限定Swiss-Protヒット100件(同一性順)、各行にUniProt
   family/gene/organismメタデータ付き——MAK(同一性35.1%、24位)も含む、
-  `dd_idea`のPfam/InterProベース`--discover`では見えない蛋白。
-  テンプレート(AlphaFoldモデル+RCSB構造)はアクセッションごとに選択的に
-  取得する(一括ではない)——`hits.json`の各行の`pdb_structures`フィールド
-  参照(`null`=未取得。現時点では全行未取得)。
+  `dd_idea`のPfam/InterProベース`--discover`では見えない蛋白。各行に
+  ChEMBL活性件数(`chembl_targets`、解決済みターゲットごとの
+  `n_activities`)も付与済み——CDK20自身はほぼ皆無(活性1件)、詳細は
+  下記「分かったこと」参照。構造テンプレート(AlphaFoldモデル+RCSB構造)
+  はアクセッションごとに選択的に取得する(一括ではない)——`hits.json`の
+  各行の`pdb_structures`フィールド参照(`null`=未取得。現時点では全行
+  未取得)。
+
+## 分かったこと
+
+**100件のBLASTヒット間でChEMBLカバレッジに3000倍超の開きがある**
+(2026-07-24、`--chembl-activity-all`、pChEMBL値付きbinding assay):
+CDK20自身はChEMBL活性データが1件のみ——RCSB構造も0件であることと
+整合し、実験的にほぼ未研究のキナーゼであることが分かる。MAK
+(ファミリー分類ベースの`--discover`では見えないヒット)は13件。
+最もカバレッジが厚いヒットはGSK3B(7448件)、MAPK1/ERK2(6927件)、
+MAPK14/p38(6811件)、DYRK1A(6288件)、AURKA(3769件)、CDK2
+(3015件、ChEMBL自身の`CHEMBL301`ページと完全一致)。あるヒットが
+最大限有用であるためには、CDK20への配列同一性(構造テンプレートの
+根拠として)と、十分なSARデータ(`dd_chembl`での後続QSARモデリング用)の
+**両方**が必要——`hits.json`の`n_activities`フィールドが後者の
+ソート・フィルタ基準になる。
 
 ## このディレクトリの再現方法
 
@@ -48,9 +66,13 @@ dd_idea-run Q8IZL9 P24941 P20794 -o CDK20_inhibition/cross_protein_comparison --
 
 # pocket_detection/ —— BLASTPベースの類似蛋白テーブル(ダウンロードなし)
 dd_idea-search Q8IZL9 -o CDK20_inhibition/pocket_detection
+
+# pocket_detection/ —— 全行についてChEMBLターゲット解決+活性件数カウント
+# (軽量——件数のみ、結果は上記「分かったこと」参照)
+dd_idea-search --chembl-activity-all -o CDK20_inhibition/pocket_detection
 ```
 
-**未実行** —— 実際のテンプレート取得:
+**未実行** —— 実際の構造テンプレート取得:
 
 ```bash
 # pocket_detection/ —— 上記の表を確認した後、特定アクセッションのAlphaFold
@@ -60,10 +82,12 @@ dd_idea-search --fetch P24941 -o CDK20_inhibition/pocket_detection
 
 ## 今後の予定(未着手)
 
-`pocket_detection/hits.json`を確認してどのアクセッションが実際に
-テンプレート取得の価値があるか選定する(上位: CDK5 46.0%、CDK3 45.3%、
-CDK2 43.8%、CDK7 43.1%、CDK1 43.1%。MAKは35.1%で24位)。上記の
-`--fetch`コマンドを該当分に実行し、続いて`dd_afpocket`のポケット検出/
-局所拘束MDアンサンブル生成、ドッキング(`dd_docking`)、QSAR
-(`dd_chembl`)——実行した際の出力もここに置く(例: `docking/`、`qsar/`)、
-各ツール自身のレポジトリには置かない。
+`pocket_detection/hits.json`の`pct_identity`と`n_activities`の両方を
+使って、実際に構造テンプレート取得の価値があるアクセッションを選定する
+(候補: CDK2 43.8%/活性3015件、CDK1 43.1%/1488件、AURKA
+28.4%/3769件——両軸で高い。MAK 35.1%/13件——クロスプロテイン比較上は
+構造的に関連するがChEMBLデータは乏しい)。上記の`--fetch`コマンドを
+該当分に実行し、続いて`dd_afpocket`のポケット検出/局所拘束MD
+アンサンブル生成、ドッキング(`dd_docking`)、QSAR(`dd_chembl`)——実行
+した際の出力もここに置く(例: `docking/`、`qsar/`)、各ツール自身の
+レポジトリには置かない。

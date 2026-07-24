@@ -5,6 +5,7 @@
   dd_idea-run    ACC [ACC ...] -o out_dir --reference ACC
   dd_idea-search QUERY -o out_dir   (UniProt accession, ChEMBL target ID, or a raw sequence -- table only)
   dd_idea-search --fetch ACC [ACC ...] -o out_dir   (or --fetch-all -- downloads templates for hits.json rows)
+  dd_idea-search --chembl-activity ACC [ACC ...] -o out_dir   (or --chembl-activity-all -- counts ChEMBL bioactivity)
 """
 from __future__ import annotations
 
@@ -168,10 +169,11 @@ def build_search_parser() -> argparse.ArgumentParser:
                     "protein and BLASTP it against Swiss-Prot to find real sequence-similar proteins (independent "
                     "of Pfam/InterPro family classification -- see --discover for that), printing a reviewable "
                     "table (family/gene/organism/length/identity) -- no downloads yet. Once you've looked at the "
-                    "table, --fetch/--fetch-all downloads AlphaFold models + RCSB structures for just the "
+                    "table, --fetch/--fetch-all downloads AlphaFold models + RCSB structures, and "
+                    "--chembl-activity/--chembl-activity-all counts ChEMBL bioactivity records, for just the "
                     "accessions worth it.",
     )
-    parser.add_argument("query", nargs="?", default=None, help="UniProt accession (e.g. Q8IZL9), ChEMBL target ID (e.g. CHEMBL301), or a raw sequence -- required unless --fetch/--fetch-all")
+    parser.add_argument("query", nargs="?", default=None, help="UniProt accession (e.g. Q8IZL9), ChEMBL target ID (e.g. CHEMBL301), or a raw sequence -- required unless --fetch/--fetch-all/--chembl-activity/--chembl-activity-all")
     parser.add_argument("-o", "--out-dir", required=True, help="Output directory")
     parser.add_argument("--evalue", type=float, default=1e-10, help="BLASTP e-value threshold (default: 1e-10)")
     parser.add_argument("--any-organism", action="store_true", help="Search all organisms instead of the default Homo sapiens-only restriction")
@@ -192,9 +194,25 @@ def build_search_parser() -> argparse.ArgumentParser:
              "be kept (default: 2.0). Every structure meeting this bar is kept -- no cap, no ligand preference "
              "(unlike dd_idea-fetch's --pdb-resolution-cutoff).",
     )
+    parser.add_argument(
+        "--chembl-activity", metavar="ACC", nargs="+", default=None,
+        help="Instead of a new search, resolve ChEMBL target(s) and count bioactivity records for these "
+             "accessions from an existing hits.json in --out-dir.",
+    )
+    parser.add_argument("--chembl-activity-all", action="store_true", help="Like --chembl-activity, but for every row in hits.json")
     parser.add_argument("--summary-format", choices=["table", "csv", "markdown"], default="table", help="table (stdout only, default) also written as csv/markdown to out_dir")
     parser.add_argument("--no-progress", action="store_true", help="Suppress the one-line-per-item progress output")
     return parser
+
+
+def _int_or_zero(s: str) -> int:
+    return int(s) if s != "-" else 0
+
+
+def _n_chembl_activities(r: dict) -> str:
+    if r["chembl_targets"] is None:
+        return "-"
+    return str(sum(t["n_activities"] for t in r["chembl_targets"]))
 
 
 def _summary_headers_row(r: dict) -> list:
@@ -202,17 +220,19 @@ def _summary_headers_row(r: dict) -> list:
     n_templates = "-" if r["pdb_structures"] is None else str(len(r["pdb_structures"]))
     return [
         str(r["accession"] or "(sequence)"), r["gene"], r["organism"], r["family"], str(r["length"]),
-        f"{r['pct_identity']:.1f}", evalue_str, n_templates,
+        f"{r['pct_identity']:.1f}", evalue_str, n_templates, _n_chembl_activities(r),
     ]
 
 
+_SEARCH_TABLE_HEADERS = ["Accession", "Gene", "Organism", "Family", "Length", "%Id", "E-value", "#Templates", "#ChEMBL Activities"]
+
+
 def _print_search_table(rows: list) -> None:
-    headers = ["Accession", "Gene", "Organism", "Family", "Length", "%Id", "E-value", "#Templates"]
     table_rows = [_summary_headers_row(r) for r in rows]
-    widths = [max(len(headers[i]), *(len(row[i]) for row in table_rows)) for i in range(len(headers))]
+    widths = [max(len(_SEARCH_TABLE_HEADERS[i]), *(len(row[i]) for row in table_rows)) for i in range(len(_SEARCH_TABLE_HEADERS))]
     widths[3] = min(widths[3], 64)  # cap Family so one BLOSUM-style long comment doesn't blow out the table
     fmt = "  ".join(f"{{:<{w}}}" for w in widths)
-    print(fmt.format(*headers))
+    print(fmt.format(*_SEARCH_TABLE_HEADERS))
     print(fmt.format(*["-" * w for w in widths]))
     for row in table_rows:
         row = list(row)
@@ -221,55 +241,66 @@ def _print_search_table(rows: list) -> None:
 
 
 def _write_search_summary(rows: list, out_dir: str, fmt: str) -> None:
-    headers = ["Accession", "Gene", "Organism", "Family", "Length", "%Id", "E-value", "#Templates"]
     table_rows = [_summary_headers_row(r) for r in rows]
     if fmt == "csv":
         dest = f"{out_dir}/hits_summary.csv"
         with open(dest, "w", newline="") as fh:
             writer = csv.writer(fh)
-            writer.writerow(headers)
+            writer.writerow(_SEARCH_TABLE_HEADERS)
             writer.writerows(table_rows)
     else:
         dest = f"{out_dir}/hits_summary.md"
-        lines = ["| " + " | ".join(headers) + " |", "|" + "---|" * len(headers)]
+        lines = ["| " + " | ".join(_SEARCH_TABLE_HEADERS) + " |", "|" + "---|" * len(_SEARCH_TABLE_HEADERS)]
         lines += ["| " + " | ".join(row) + " |" for row in table_rows]
         with open(dest, "w") as fh:
             fh.write("\n".join(lines) + "\n")
     print(f"\n-> {dest}")
 
 
+def _print_and_write_summary(rows: list, args) -> None:
+    print()
+    _print_search_table(rows)
+    if args.summary_format in ("csv", "markdown"):
+        _write_search_summary(rows, args.out_dir, args.summary_format)
+
+
 def main_search(argv=None) -> None:
     args = build_search_parser().parse_args(argv)
     show_progress = not args.no_progress
+    enrichment_mode = args.fetch_all or args.fetch or args.chembl_activity_all or args.chembl_activity
+
+    if enrichment_mode and args.query:
+        print(f"[note] ignoring QUERY ({args.query!r}) -- enrichment flags operate on the existing hits.json in {args.out_dir}")
 
     if args.fetch_all or args.fetch:
-        if args.query:
-            print(f"[note] ignoring QUERY ({args.query!r}) -- --fetch/--fetch-all operates on the existing hits.json in {args.out_dir}")
         accessions = "all" if args.fetch_all else args.fetch
         result = search_module.fetch_templates(
             args.out_dir, accessions, resolution_cutoff=args.resolution_cutoff, show_progress=show_progress,
         )
         rows = result["hits"]
-        print()
-        _print_search_table(rows)
-        if args.summary_format in ("csv", "markdown"):
-            _write_search_summary(rows, args.out_dir, args.summary_format)
+        _print_and_write_summary(rows, args)
         n_structures = sum(len(r["pdb_structures"]) for r in rows if r["pdb_structures"] is not None)
         print(f"\n[done] templates fetched -> {n_structures} structure(s) total -> {args.out_dir}/hits.json")
         return
 
+    if args.chembl_activity_all or args.chembl_activity:
+        accessions = "all" if args.chembl_activity_all else args.chembl_activity
+        result = search_module.annotate_chembl_activity(args.out_dir, accessions, show_progress=show_progress)
+        rows = result["hits"]
+        _print_and_write_summary(rows, args)
+        n_activities = sum(_int_or_zero(_n_chembl_activities(r)) for r in rows)
+        print(f"\n[done] ChEMBL activity counted -> {n_activities} activity record(s) total -> {args.out_dir}/hits.json")
+        return
+
     if not args.query:
-        raise SystemExit("dd_idea-search: QUERY is required unless --fetch/--fetch-all is given")
+        raise SystemExit("dd_idea-search: QUERY is required unless --fetch/--fetch-all/--chembl-activity/--chembl-activity-all is given")
     result = search_module.search(
         args.query, args.out_dir, evalue=args.evalue, any_organism=args.any_organism,
         max_hits=args.max_hits, show_progress=show_progress,
     )
     rows = result["hits"]
-    print()
-    _print_search_table(rows)
-    if args.summary_format in ("csv", "markdown"):
-        _write_search_summary(rows, args.out_dir, args.summary_format)
+    _print_and_write_summary(rows, args)
     print(
-        f"\n[done] {len(rows)} protein(s) (seed + hits) -> {args.out_dir}/hits.json -- "
-        f"no downloads yet, review the table then run with --fetch ACC [ACC ...] or --fetch-all"
+        f"\n[done] {len(rows)} protein(s) (seed + hits) -> {args.out_dir}/hits.json -- no downloads/lookups "
+        f"yet, review the table then run with --fetch/--fetch-all or --chembl-activity/--chembl-activity-all"
     )

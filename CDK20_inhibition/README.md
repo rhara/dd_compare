@@ -25,10 +25,28 @@ this repo, or in any other `dd_*` project's own directory.
   BLASTP-similar proteins instead. `hits.json` has 100 Swiss-Prot hits
   (Homo sapiens, ranked by %identity), each with UniProt family/gene/
   organism metadata -- including MAK (35.1% identity, rank 24), invisible
-  to `dd_idea`'s Pfam/InterPro-based `--discover`. Templates (AlphaFold
-  model + RCSB structures) are fetched selectively per accession, not all
-  at once -- see `hits.json`'s `pdb_structures` field per row (`null` =
-  not fetched yet; none fetched so far).
+  to `dd_idea`'s Pfam/InterPro-based `--discover`. Each row also has its
+  ChEMBL bioactivity count (`chembl_targets`, `n_activities` per resolved
+  target) -- CDK20 itself has essentially none (1 activity on record);
+  see "Findings" below for the well-covered hits. Structural templates
+  (AlphaFold model + RCSB structures) are fetched selectively per
+  accession, not all at once -- see `hits.json`'s `pdb_structures` field
+  per row (`null` = not fetched yet; none fetched so far).
+
+## Findings
+
+**ChEMBL coverage varies by >3000x across the 100 BLAST hits** (2026-07-24,
+`--chembl-activity-all`, binding assays with a pChEMBL value): CDK20 itself
+has just 1 ChEMBL activity record, consistent with having zero RCSB
+structures too -- this is a genuinely under-studied kinase. MAK (the
+family-classification-invisible hit `--discover` misses) has 13. The
+best-covered hits are GSK3B (7448), MAPK1/ERK2 (6927), MAPK14/p38 (6811),
+DYRK1A (6288), AURKA (3769), and CDK2 (3015, matching ChEMBL's own
+`CHEMBL301` page exactly). A hit needs *both* decent sequence identity to
+CDK20 (for the structural-template rationale) *and* enough SAR data (for
+downstream QSAR modeling with `dd_chembl`) to be maximally useful --
+`hits.json`'s `n_activities` field is what to sort/filter by for the
+latter.
 
 ## Reproducing this directory
 
@@ -52,9 +70,13 @@ dd_idea-run Q8IZL9 P24941 P20794 -o CDK20_inhibition/cross_protein_comparison --
 
 # pocket_detection/ -- BLASTP-based similar-protein table (no downloads yet)
 dd_idea-search Q8IZL9 -o CDK20_inhibition/pocket_detection
+
+# pocket_detection/ -- resolve ChEMBL target(s) + count bioactivity records for
+# every row (cheap -- counts only, see "Findings" above for the results)
+dd_idea-search --chembl-activity-all -o CDK20_inhibition/pocket_detection
 ```
 
-**Not yet done** -- fetching any actual templates:
+**Not yet done** -- fetching any actual structural templates:
 
 ```bash
 # pocket_detection/ -- fetch AlphaFold model + RCSB templates (<=2.0Å, the tool's
@@ -64,10 +86,12 @@ dd_idea-search --fetch P24941 -o CDK20_inhibition/pocket_detection
 
 ## Next steps (not yet done)
 
-Review `pocket_detection/hits.json` to pick which accessions are actually
-worth fetching templates for (top hits: CDK5 46.0%, CDK3 45.3%, CDK2
-43.8%, CDK7 43.1%, CDK1 43.1%; MAK 35.1% at rank 24), run the `--fetch`
-command above for those, then `dd_afpocket`'s pocket detection/restrained-
-MD ensemble generation, then docking (`dd_docking`) and QSAR
-(`dd_chembl`) -- their outputs belong here too (e.g. `docking/`, `qsar/`),
-not inside those tools' own repos.
+Using both `pct_identity` and `n_activities` from `pocket_detection/hits.json`,
+pick which accessions are actually worth fetching structural templates
+for (candidates worth a look: CDK2 43.8%/3015 activities, CDK1 43.1%/1488,
+AURKA 28.4%/3769 -- high on both axes; MAK 35.1%/13 -- structurally
+relevant per the cross-protein comparison but ChEMBL-poor), run the
+`--fetch` command above for those, then `dd_afpocket`'s pocket
+detection/restrained-MD ensemble generation, then docking (`dd_docking`)
+and QSAR (`dd_chembl`) -- their outputs belong here too (e.g. `docking/`,
+`qsar/`), not inside those tools' own repos.

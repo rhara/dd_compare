@@ -6,13 +6,16 @@ this exists alongside `similarity.py`'s Pfam/InterPro-based `--discover`),
 and build a reviewable table (UniProt family, gene, organism, length,
 %identity, e-value) -- deliberately *without* downloading anything yet.
 
-Two-step, atomic by design: `search()` only ever talks to UniProt +
-NCBI BLAST (small, fast requests) and writes `hits.json`; `fetch_templates()`
-is a separate, explicit step that downloads AlphaFold models and RCSB
-structures -- only for the accessions the caller actually asks for, after
-having looked at the table `search()` produced. A protein with hundreds of
-RCSB entries (e.g. CDK2's 512) should never be downloaded by accident just
-because it happened to BLAST-match the seed.
+Atomic by design: `search()` only ever talks to UniProt + NCBI BLAST
+(small, fast requests) and writes `hits.json`. Two further, separate,
+explicit steps enrich specific rows of that same `hits.json` only for
+accessions the caller actually asks for, after looking at the table
+`search()` produced -- `fetch_templates()` downloads AlphaFold models and
+RCSB structures (a protein with hundreds of RCSB entries, e.g. CDK2's 512,
+should never be downloaded by accident just because it BLAST-matched the
+seed), and `annotate_chembl_activity()` counts each accession's ChEMBL
+bioactivity records (cheap -- counts only, no data itself) to gauge how
+much SAR data exists for it.
 """
 from __future__ import annotations
 
@@ -104,19 +107,21 @@ def resolve_seed(query: str, out_dir: Union[str, Path], *, show_progress: bool =
 
 def _metadata_row(accession: Optional[str], entry: Optional[dict], *, pct_identity: float, evalue: Optional[float], length: Optional[int] = None, role: str) -> dict:
     """A `hits.json` row with UniProt metadata filled in but
-    `pdb_structures: None` (not yet fetched) and `afdb_path: None` (seed
-    only) -- the shape `search()` writes for every row, before
-    `fetch_templates` has touched anything."""
+    `pdb_structures: None` (not yet fetched via `fetch_templates`) and
+    `chembl_targets: None` (not yet annotated via `annotate_chembl_activity`)
+    -- the shape `search()` writes for every row, before either later,
+    optional enrichment step has touched anything."""
     if entry is None:
         return {
             "accession": accession, "gene": "-", "organism": "-", "family": "(no UniProt accession)",
             "length": length, "pct_identity": pct_identity, "evalue": evalue,
-            "afdb_path": None, "pdb_structures": None, "role": role,
+            "afdb_path": None, "pdb_structures": None, "chembl_targets": None, "role": role,
         }
     return {
         "accession": accession, "gene": uniprot.gene_name(entry), "organism": uniprot.organism_name(entry),
         "family": uniprot.family_string(entry), "length": uniprot.canonical_length(entry),
-        "pct_identity": pct_identity, "evalue": evalue, "afdb_path": None, "pdb_structures": None, "role": role,
+        "pct_identity": pct_identity, "evalue": evalue, "afdb_path": None, "pdb_structures": None,
+        "chembl_targets": None, "role": role,
     }
 
 
@@ -169,6 +174,21 @@ def _load_hits_json(out_dir: Path) -> dict:
     return json.loads(hits_path.read_text())
 
 
+def _resolve_targets(result: dict, accessions: Union[List[str], str]) -> "dict[str, dict]":
+    """`{accession: row}` for the requested `accessions` (or every row, for
+    the literal string `"all"`) out of an already-loaded `hits.json`.
+    Raises `ValueError` naming the offending accession(s) if any aren't
+    present -- shared by `fetch_templates` and `annotate_chembl_activity`,
+    the two `hits.json`-enrichment steps."""
+    rows_by_acc = {r["accession"]: r for r in result["hits"] if r["accession"] is not None}
+    if accessions == "all":
+        return rows_by_acc
+    unknown = [a for a in accessions if a.upper() not in rows_by_acc]
+    if unknown:
+        raise ValueError(f"unknown accession(s) {unknown} -- hits.json has: {sorted(rows_by_acc)}")
+    return {a.upper(): rows_by_acc[a.upper()] for a in accessions}
+
+
 def fetch_templates(
     out_dir: Union[str, Path], accessions: Union[List[str], str], *,
     resolution_cutoff: float = 2.0, show_progress: bool = True,
@@ -180,18 +200,9 @@ def fetch_templates(
     those rows in place and rewrites `hits.json`."""
     out_dir = Path(out_dir)
     result = _load_hits_json(out_dir)
-    rows_by_acc = {r["accession"]: r for r in result["hits"] if r["accession"] is not None}
+    targets = _resolve_targets(result, accessions)
 
-    if accessions == "all":
-        targets = list(rows_by_acc)
-    else:
-        unknown = [a for a in accessions if a.upper() not in rows_by_acc]
-        if unknown:
-            raise ValueError(f"unknown accession(s) {unknown} -- hits.json has: {sorted(rows_by_acc)}")
-        targets = [a.upper() for a in accessions]
-
-    for i, acc in enumerate(targets, start=1):
-        row = rows_by_acc[acc]
+    for i, (acc, row) in enumerate(targets.items(), start=1):
         if show_progress:
             print(f"[fetch] ({i}/{len(targets)}) {acc}: fetching templates...", flush=True)
         if row["role"] == "seed":
@@ -207,6 +218,54 @@ def fetch_templates(
         row["pdb_structures"] = rcsb.list_all_structures_at_resolution(
             acc, out_dir, resolution_cutoff=resolution_cutoff, show_progress=show_progress,
         )
+
+    (out_dir / "hits.json").write_text(json.dumps(result, indent=2))
+    return result
+
+
+def annotate_chembl_activity(
+    out_dir: Union[str, Path], accessions: Union[List[str], str], *,
+    assay_types: tuple = chembl.DEFAULT_ASSAY_TYPES, show_progress: bool = True,
+) -> dict:
+    """For the given `accessions` (or `"all"`) out of an existing
+    `hits.json`, resolve every ChEMBL `SINGLE PROTEIN` target and count its
+    bioactivity records (`chembl.count_activities` -- binding assays with a
+    pChEMBL value by default, same filter `dd_chembl` itself uses for QSAR
+    training data). Sets each row's `chembl_targets` to a list of
+    `{target_chembl_id, pref_name, organism, n_activities}` (`[]` if
+    ChEMBL has no single-protein target for that accession at all -- not
+    the same as `None`, "not yet checked"). Cheap: no bioactivity data
+    itself is downloaded, only counts."""
+    out_dir = Path(out_dir)
+    result = _load_hits_json(out_dir)
+    targets = _resolve_targets(result, accessions)
+
+    for i, (acc, row) in enumerate(targets.items(), start=1):
+        if show_progress:
+            print(f"[chembl] ({i}/{len(targets)}) {acc}: resolving ChEMBL target(s)...", flush=True)
+        try:
+            chembl_targets = chembl.resolve_uniprot_to_chembl_targets(acc)
+        except Exception as e:
+            if show_progress:
+                print(f"[chembl] {acc}: target resolution failed ({e}), skipping", flush=True)
+            continue
+        if not chembl_targets:
+            if show_progress:
+                print(f"[chembl] {acc}: no ChEMBL single-protein target", flush=True)
+            row["chembl_targets"] = []
+            continue
+        annotated = []
+        for t in chembl_targets:
+            try:
+                n = chembl.count_activities(t["target_chembl_id"], assay_types=assay_types)
+            except Exception as e:
+                if show_progress:
+                    print(f"[chembl] {acc}: {t['target_chembl_id']} activity count failed ({e})", flush=True)
+                continue
+            annotated.append({**t, "n_activities": n})
+            if show_progress:
+                print(f"[chembl] {acc}: {t['target_chembl_id']} ({t['pref_name']}): {n} activities", flush=True)
+        row["chembl_targets"] = annotated
 
     (out_dir / "hits.json").write_text(json.dumps(result, indent=2))
     return result

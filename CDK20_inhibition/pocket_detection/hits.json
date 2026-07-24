@@ -19,7 +19,15 @@
       "evalue": null,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "seed"
+      "role": "seed",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3559690",
+          "pref_name": "Cyclin-dependent kinase 20",
+          "organism": "Homo sapiens",
+          "n_activities": 1
+        }
+      ]
     },
     {
       "accession": "Q00535",
@@ -31,7 +39,15 @@
       "evalue": 5.61272e-79,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4036",
+          "pref_name": "Cyclin-dependent kinase 5",
+          "organism": "Homo sapiens",
+          "n_activities": 407
+        }
+      ]
     },
     {
       "accession": "Q00526",
@@ -43,7 +59,15 @@
       "evalue": 6.85254e-86,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4442",
+          "pref_name": "Cyclin-dependent kinase 3",
+          "organism": "Homo sapiens",
+          "n_activities": 59
+        }
+      ]
     },
     {
       "accession": "P24941",
@@ -55,7 +79,15 @@
       "evalue": 1.08557e-79,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL301",
+          "pref_name": "Cyclin-dependent kinase 2",
+          "organism": "Homo sapiens",
+          "n_activities": 3015
+        }
+      ]
     },
     {
       "accession": "P50613",
@@ -67,7 +99,15 @@
       "evalue": 6.82667e-80,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3055",
+          "pref_name": "Cyclin-dependent kinase 7",
+          "organism": "Homo sapiens",
+          "n_activities": 611
+        }
+      ]
     },
     {
       "accession": "P06493",
@@ -79,7 +119,15 @@
       "evalue": 5.03581e-80,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL308",
+          "pref_name": "Cyclin-dependent kinase 1",
+          "organism": "Homo sapiens",
+          "n_activities": 1488
+        }
+      ]
     },
     {
       "accession": "P21127",
@@ -91,7 +139,15 @@
       "evalue": 3.20566e-73,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5808",
+          "pref_name": "Cyclin-dependent kinase 11B",
+          "organism": "Homo sapiens",
+          "n_activities": 27
+        }
+      ]
     },
     {
       "accession": "Q9UQ88",
@@ -103,7 +159,15 @@
       "evalue": 7.32025e-73,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5416",
+          "pref_name": "Cyclin-dependent kinase 11A",
+          "organism": "Homo sapiens",
+          "n_activities": 75
+        }
+      ]
     },
     {
       "accession": "P50750",
@@ -115,7 +179,15 @@
       "evalue": 1.18186e-68,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3116",
+          "pref_name": "Cyclin-dependent kinase 9",
+          "organism": "Homo sapiens",
+          "n_activities": 2051
+        }
+      ]
     },
     {
       "accession": "O76039",
@@ -127,7 +199,15 @@
       "evalue": 2.80515e-60,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1163112",
+          "pref_name": "Cyclin-dependent kinase-like 5",
+          "organism": "Homo sapiens",
+          "n_activities": 24
+        }
+      ]
     },
     {
       "accession": "Q13164",
@@ -139,7 +219,15 @@
       "evalue": 6.68292e-58,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5332",
+          "pref_name": "Mitogen-activated protein kinase 7",
+          "organism": "Homo sapiens",
+          "n_activities": 305
+        }
+      ]
     },
     {
       "accession": "Q15131",
@@ -151,7 +239,15 @@
       "evalue": 4.00568e-65,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1795191",
+          "pref_name": "Cyclin-dependent kinase 10",
+          "organism": "Homo sapiens",
+          "n_activities": 4
+        }
+      ]
     },
     {
       "accession": "Q8TD08",
@@ -163,7 +259,15 @@
       "evalue": 1.30192e-58,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5198",
+          "pref_name": "Mitogen-activated protein kinase 15",
+          "organism": "Homo sapiens",
+          "n_activities": 90
+        }
+      ]
     },
     {
       "accession": "Q9NYV4",
@@ -175,7 +279,15 @@
       "evalue": 8.33398e-66,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3559692",
+          "pref_name": "Cyclin-dependent kinase 12",
+          "organism": "Homo sapiens",
+          "n_activities": 267
+        }
+      ]
     },
     {
       "accession": "Q14004",
@@ -187,7 +299,15 @@
       "evalue": 1.00808e-69,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1795192",
+          "pref_name": "Cyclin-dependent kinase 13",
+          "organism": "Homo sapiens",
+          "n_activities": 180
+        }
+      ]
     },
     {
       "accession": "Q00534",
@@ -199,7 +319,15 @@
       "evalue": 2.93533e-60,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL2508",
+          "pref_name": "Cyclin-dependent kinase 6",
+          "organism": "Homo sapiens",
+          "n_activities": 1034
+        }
+      ]
     },
     {
       "accession": "Q07002",
@@ -211,7 +339,15 @@
       "evalue": 1.05365e-63,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5316",
+          "pref_name": "Cyclin-dependent kinase 18",
+          "organism": "Homo sapiens",
+          "n_activities": 29
+        }
+      ]
     },
     {
       "accession": "Q5MAI5",
@@ -223,7 +359,15 @@
       "evalue": 4.91659e-61,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4523326",
+          "pref_name": "Cyclin-dependent kinase-like 4",
+          "organism": "Homo sapiens",
+          "n_activities": 2
+        }
+      ]
     },
     {
       "accession": "Q00532",
@@ -235,7 +379,15 @@
       "evalue": 1.40891e-59,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5789",
+          "pref_name": "Cyclin-dependent kinase-like 1",
+          "organism": "Homo sapiens",
+          "n_activities": 6
+        }
+      ]
     },
     {
       "accession": "O94921",
@@ -247,7 +399,15 @@
       "evalue": 6.75888e-56,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL6162",
+          "pref_name": "Cyclin-dependent kinase 14",
+          "organism": "Homo sapiens",
+          "n_activities": 43
+        }
+      ]
     },
     {
       "accession": "Q96Q40",
@@ -259,7 +419,15 @@
       "evalue": 1.15491e-58,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5856",
+          "pref_name": "Cyclin-dependent kinase 15",
+          "organism": "Homo sapiens",
+          "n_activities": 18
+        }
+      ]
     },
     {
       "accession": "Q92772",
@@ -271,7 +439,15 @@
       "evalue": 1.40879e-58,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5728",
+          "pref_name": "Cyclin-dependent kinase-like 2",
+          "organism": "Homo sapiens",
+          "n_activities": 41
+        }
+      ]
     },
     {
       "accession": "Q16539",
@@ -283,7 +459,15 @@
       "evalue": 7.1219e-53,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL260",
+          "pref_name": "Mitogen-activated protein kinase 14",
+          "organism": "Homo sapiens",
+          "n_activities": 6811
+        }
+      ]
     },
     {
       "accession": "P11802",
@@ -295,7 +479,15 @@
       "evalue": 2.13627e-52,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL331",
+          "pref_name": "Cyclin-dependent kinase 4",
+          "organism": "Homo sapiens",
+          "n_activities": 1695
+        }
+      ]
     },
     {
       "accession": "Q00536",
@@ -307,7 +499,15 @@
       "evalue": 2.1616e-61,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4597",
+          "pref_name": "Cyclin-dependent kinase 16",
+          "organism": "Homo sapiens",
+          "n_activities": 97
+        }
+      ]
     },
     {
       "accession": "Q00537",
@@ -319,7 +519,15 @@
       "evalue": 4.60569e-65,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5790",
+          "pref_name": "Cyclin-dependent kinase 17",
+          "organism": "Homo sapiens",
+          "n_activities": 61
+        }
+      ]
     },
     {
       "accession": "P53778",
@@ -331,7 +539,15 @@
       "evalue": 1.90791e-50,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4674",
+          "pref_name": "Mitogen-activated protein kinase 12",
+          "organism": "Homo sapiens",
+          "n_activities": 215
+        }
+      ]
     },
     {
       "accession": "Q9UBE8",
@@ -343,7 +559,15 @@
       "evalue": 5.02069e-46,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5364",
+          "pref_name": "Serine/threonine-protein kinase NLK",
+          "organism": "Homo sapiens",
+          "n_activities": 71
+        }
+      ]
     },
     {
       "accession": "Q9UPZ9",
@@ -355,7 +579,15 @@
       "evalue": 2.96249e-59,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1163126",
+          "pref_name": "Serine/threonine-protein kinase ICK",
+          "organism": "Homo sapiens",
+          "n_activities": 43
+        }
+      ]
     },
     {
       "accession": "Q9UQ07",
@@ -367,7 +599,15 @@
       "evalue": 2.84852e-48,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4295983",
+          "pref_name": "MAPK/MAK/MRK overlapping kinase",
+          "organism": "Homo sapiens",
+          "n_activities": 44
+        }
+      ]
     },
     {
       "accession": "O43781",
@@ -379,7 +619,15 @@
       "evalue": 1.95221e-32,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4575",
+          "pref_name": "Dual specificity tyrosine-phosphorylation-regulated kinase 3",
+          "organism": "Homo sapiens",
+          "n_activities": 383
+        }
+      ]
     },
     {
       "accession": "P20794",
@@ -391,7 +639,15 @@
       "evalue": 4.17057e-58,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1163106",
+          "pref_name": "Serine/threonine-protein kinase MAK",
+          "organism": "Homo sapiens",
+          "n_activities": 13
+        }
+      ]
     },
     {
       "accession": "Q15759",
@@ -403,7 +659,15 @@
       "evalue": 2.38833e-50,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3961",
+          "pref_name": "Mitogen-activated protein kinase 11",
+          "organism": "Homo sapiens",
+          "n_activities": 324
+        }
+      ]
     },
     {
       "accession": "P28482",
@@ -415,7 +679,15 @@
       "evalue": 3.96731e-55,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4040",
+          "pref_name": "Mitogen-activated protein kinase 1",
+          "organism": "Homo sapiens",
+          "n_activities": 6927
+        }
+      ]
     },
     {
       "accession": "Q8IVW4",
@@ -427,7 +699,15 @@
       "evalue": 1.45378e-53,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1163117",
+          "pref_name": "Cyclin-dependent kinase-like 3",
+          "organism": "Homo sapiens",
+          "n_activities": 17
+        }
+      ]
     },
     {
       "accession": "P45984",
@@ -439,7 +719,15 @@
       "evalue": 6.06501e-42,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4179",
+          "pref_name": "Mitogen-activated protein kinase 9",
+          "organism": "Homo sapiens",
+          "n_activities": 1009
+        }
+      ]
     },
     {
       "accession": "P27361",
@@ -451,7 +739,15 @@
       "evalue": 6.95655e-53,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3385",
+          "pref_name": "Mitogen-activated protein kinase 3",
+          "organism": "Homo sapiens",
+          "n_activities": 379
+        }
+      ]
     },
     {
       "accession": "P49841",
@@ -463,7 +759,15 @@
       "evalue": 3.99809e-47,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL262",
+          "pref_name": "Glycogen synthase kinase-3 beta",
+          "organism": "Homo sapiens",
+          "n_activities": 7448
+        }
+      ]
     },
     {
       "accession": "Q92630",
@@ -475,7 +779,15 @@
       "evalue": 2.81309e-31,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4376",
+          "pref_name": "Dual specificity tyrosine-phosphorylation-regulated kinase 2",
+          "organism": "Homo sapiens",
+          "n_activities": 646
+        }
+      ]
     },
     {
       "accession": "Q9Y463",
@@ -487,7 +799,15 @@
       "evalue": 2.69123e-29,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5543",
+          "pref_name": "Dual specificity tyrosine-phosphorylation-regulated kinase 1B",
+          "organism": "Homo sapiens",
+          "n_activities": 953
+        }
+      ]
     },
     {
       "accession": "Q13627",
@@ -499,7 +819,15 @@
       "evalue": 6.58366e-29,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL2292",
+          "pref_name": "Dual specificity tyrosine-phosphorylation-regulated kinase 1A",
+          "organism": "Homo sapiens",
+          "n_activities": 6288
+        }
+      ]
     },
     {
       "accession": "P31152",
@@ -511,7 +839,15 @@
       "evalue": 2.04238e-44,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5759",
+          "pref_name": "Mitogen-activated protein kinase 4",
+          "organism": "Homo sapiens",
+          "n_activities": 14
+        }
+      ]
     },
     {
       "accession": "O15264",
@@ -523,7 +859,15 @@
       "evalue": 8.04469e-51,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL2939",
+          "pref_name": "Mitogen-activated protein kinase 13",
+          "organism": "Homo sapiens",
+          "n_activities": 107
+        }
+      ]
     },
     {
       "accession": "P49840",
@@ -535,7 +879,15 @@
       "evalue": 3.70143e-46,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL2850",
+          "pref_name": "Glycogen synthase kinase-3 alpha",
+          "organism": "Homo sapiens",
+          "n_activities": 1669
+        }
+      ]
     },
     {
       "accession": "P53779",
@@ -547,7 +899,15 @@
       "evalue": 7.6665e-41,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL2637",
+          "pref_name": "Mitogen-activated protein kinase 10",
+          "organism": "Homo sapiens",
+          "n_activities": 1941
+        }
+      ]
     },
     {
       "accession": "Q16659",
@@ -559,7 +919,15 @@
       "evalue": 3.15256e-46,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5121",
+          "pref_name": "Mitogen-activated protein kinase 6",
+          "organism": "Homo sapiens",
+          "n_activities": 245
+        }
+      ]
     },
     {
       "accession": "Q96L34",
@@ -571,7 +939,15 @@
       "evalue": 1.28432e-23,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5754",
+          "pref_name": "MAP/microtubule affinity-regulating kinase 4",
+          "organism": "Homo sapiens",
+          "n_activities": 112
+        }
+      ]
     },
     {
       "accession": "O75385",
@@ -583,7 +959,15 @@
       "evalue": 1.06263e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL6006",
+          "pref_name": "Serine/threonine-protein kinase ULK1",
+          "organism": "Homo sapiens",
+          "n_activities": 400
+        }
+      ]
     },
     {
       "accession": "P45983",
@@ -595,7 +979,15 @@
       "evalue": 7.77151e-40,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL2276",
+          "pref_name": "Mitogen-activated protein kinase 8",
+          "organism": "Homo sapiens",
+          "n_activities": 1931
+        }
+      ]
     },
     {
       "accession": "P27448",
@@ -607,7 +999,15 @@
       "evalue": 1.58865e-21,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5600",
+          "pref_name": "MAP/microtubule affinity-regulating kinase 3",
+          "organism": "Homo sapiens",
+          "n_activities": 188
+        }
+      ]
     },
     {
       "accession": "P68400",
@@ -619,7 +1019,15 @@
       "evalue": 9.16374e-30,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3629",
+          "pref_name": "Casein kinase II subunit alpha",
+          "organism": "Homo sapiens",
+          "n_activities": 1519
+        }
+      ]
     },
     {
       "accession": "Q9BWU1",
@@ -631,7 +1039,15 @@
       "evalue": 1.28289e-41,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL6002",
+          "pref_name": "Cyclin-dependent kinase 19",
+          "organism": "Homo sapiens",
+          "n_activities": 56
+        }
+      ]
     },
     {
       "accession": "P49336",
@@ -643,7 +1059,15 @@
       "evalue": 9.96745e-40,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5719",
+          "pref_name": "Cyclin-dependent kinase 8",
+          "organism": "Homo sapiens",
+          "n_activities": 511
+        }
+      ]
     },
     {
       "accession": "Q7KZI7",
@@ -655,7 +1079,15 @@
       "evalue": 3.38182e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3831",
+          "pref_name": "Serine/threonine-protein kinase MARK2",
+          "organism": "Homo sapiens",
+          "n_activities": 111
+        }
+      ]
     },
     {
       "accession": "Q9NRH2",
@@ -667,7 +1099,15 @@
       "evalue": 2.01846e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1908384",
+          "pref_name": "SNF-related serine/threonine-protein kinase",
+          "organism": "Homo sapiens",
+          "n_activities": 9
+        }
+      ]
     },
     {
       "accession": "Q9Y2K2",
@@ -679,7 +1119,15 @@
       "evalue": 3.0427e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL6149",
+          "pref_name": "Serine/threonine-protein kinase SIK3",
+          "organism": "Homo sapiens",
+          "n_activities": 200
+        }
+      ]
     },
     {
       "accession": "Q15349",
@@ -691,7 +1139,15 @@
       "evalue": 1.99327e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3906",
+          "pref_name": "Ribosomal protein S6 kinase alpha-2",
+          "organism": "Homo sapiens",
+          "n_activities": 404
+        }
+      ]
     },
     {
       "accession": "Q8NEV1",
@@ -703,7 +1159,8 @@
       "evalue": 4.06559e-29,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": []
     },
     {
       "accession": "Q9H4B4",
@@ -715,7 +1172,15 @@
       "evalue": 6.61954e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4897",
+          "pref_name": "Serine/threonine-protein kinase PLK3",
+          "organism": "Homo sapiens",
+          "n_activities": 275
+        }
+      ]
     },
     {
       "accession": "Q9P0L2",
@@ -727,7 +1192,15 @@
       "evalue": 3.01512e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5940",
+          "pref_name": "Serine/threonine-protein kinase MARK1",
+          "organism": "Homo sapiens",
+          "n_activities": 52
+        }
+      ]
     },
     {
       "accession": "Q9NRP7",
@@ -739,7 +1212,15 @@
       "evalue": 2.35435e-26,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4312",
+          "pref_name": "Serine/threonine-protein kinase 36",
+          "organism": "Homo sapiens",
+          "n_activities": 44
+        }
+      ]
     },
     {
       "accession": "Q9NR20",
@@ -751,7 +1232,15 @@
       "evalue": 8.43897e-36,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1075115",
+          "pref_name": "Dual specificity tyrosine-phosphorylation-regulated kinase 4",
+          "organism": "Homo sapiens",
+          "n_activities": 243
+        }
+      ]
     },
     {
       "accession": "Q8NE63",
@@ -763,7 +1252,15 @@
       "evalue": 9.76881e-27,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1075167",
+          "pref_name": "Homeodomain-interacting protein kinase 4",
+          "organism": "Homo sapiens",
+          "n_activities": 85
+        }
+      ]
     },
     {
       "accession": "Q13177",
@@ -775,7 +1272,15 @@
       "evalue": 7.38978e-26,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4487",
+          "pref_name": "Serine/threonine-protein kinase PAK 2",
+          "organism": "Homo sapiens",
+          "n_activities": 68
+        }
+      ]
     },
     {
       "accession": "Q9H2K8",
@@ -787,7 +1292,15 @@
       "evalue": 1.07922e-21,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5701",
+          "pref_name": "Serine/threonine-protein kinase TAO3",
+          "organism": "Homo sapiens",
+          "n_activities": 127
+        }
+      ]
     },
     {
       "accession": "Q9H093",
@@ -799,7 +1312,15 @@
       "evalue": 1.40193e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5698",
+          "pref_name": "NUAK family SNF1-like kinase 2",
+          "organism": "Homo sapiens",
+          "n_activities": 90
+        }
+      ]
     },
     {
       "accession": "Q13233",
@@ -811,7 +1332,15 @@
       "evalue": 1.30845e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3956",
+          "pref_name": "Mitogen-activated protein kinase kinase kinase 1",
+          "organism": "Homo sapiens",
+          "n_activities": 54
+        }
+      ]
     },
     {
       "accession": "Q8TDX7",
@@ -823,7 +1352,15 @@
       "evalue": 1.36581e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4849",
+          "pref_name": "Serine/threonine-protein kinase Nek7",
+          "organism": "Homo sapiens",
+          "n_activities": 61
+        }
+      ]
     },
     {
       "accession": "P49759",
@@ -835,7 +1372,15 @@
       "evalue": 2.11493e-25,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4224",
+          "pref_name": "Dual specificity protein kinase CLK1",
+          "organism": "Homo sapiens",
+          "n_activities": 1222
+        }
+      ]
     },
     {
       "accession": "Q15418",
@@ -847,7 +1392,15 @@
       "evalue": 1.38445e-19,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL2553",
+          "pref_name": "Ribosomal protein S6 kinase alpha-1",
+          "organism": "Homo sapiens",
+          "n_activities": 272
+        }
+      ]
     },
     {
       "accession": "Q7L7X3",
@@ -859,7 +1412,15 @@
       "evalue": 1.40766e-23,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5261",
+          "pref_name": "Serine/threonine-protein kinase TAO1",
+          "organism": "Homo sapiens",
+          "n_activities": 182
+        }
+      ]
     },
     {
       "accession": "Q8TDC3",
@@ -871,7 +1432,15 @@
       "evalue": 6.4896e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5650",
+          "pref_name": "Serine/threonine-protein kinase BRSK1",
+          "organism": "Homo sapiens",
+          "n_activities": 34
+        }
+      ]
     },
     {
       "accession": "Q13153",
@@ -883,7 +1452,15 @@
       "evalue": 5.0671e-24,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4600",
+          "pref_name": "Serine/threonine-protein kinase PAK 1",
+          "organism": "Homo sapiens",
+          "n_activities": 479
+        }
+      ]
     },
     {
       "accession": "Q9P289",
@@ -895,7 +1472,15 @@
       "evalue": 4.60159e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5941",
+          "pref_name": "Serine/threonine-protein kinase 26",
+          "organism": "Homo sapiens",
+          "n_activities": 140
+        }
+      ]
     },
     {
       "accession": "P23443",
@@ -907,7 +1492,15 @@
       "evalue": 3.43407e-21,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4501",
+          "pref_name": "Ribosomal protein S6 kinase beta-1",
+          "organism": "Homo sapiens",
+          "n_activities": 1880
+        }
+      ]
     },
     {
       "accession": "Q9H2X6",
@@ -919,7 +1512,15 @@
       "evalue": 5.35919e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4576",
+          "pref_name": "Homeodomain-interacting protein kinase 2",
+          "organism": "Homo sapiens",
+          "n_activities": 112
+        }
+      ]
     },
     {
       "accession": "Q9HC98",
@@ -931,7 +1532,15 @@
       "evalue": 2.62806e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4309",
+          "pref_name": "Serine/threonine-protein kinase Nek6",
+          "organism": "Homo sapiens",
+          "n_activities": 40
+        }
+      ]
     },
     {
       "accession": "Q8IWQ3",
@@ -943,7 +1552,15 @@
       "evalue": 8.33631e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4574",
+          "pref_name": "Serine/threonine-protein kinase BRSK2",
+          "organism": "Homo sapiens",
+          "n_activities": 33
+        }
+      ]
     },
     {
       "accession": "O75914",
@@ -955,7 +1572,15 @@
       "evalue": 1.55047e-23,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL2999",
+          "pref_name": "Serine/threonine-protein kinase PAK 3",
+          "organism": "Homo sapiens",
+          "n_activities": 55
+        }
+      ]
     },
     {
       "accession": "P19784",
@@ -967,7 +1592,15 @@
       "evalue": 1.32925e-31,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4070",
+          "pref_name": "Casein kinase II subunit alpha'",
+          "organism": "Homo sapiens",
+          "n_activities": 386
+        }
+      ]
     },
     {
       "accession": "Q8IVH8",
@@ -979,7 +1612,15 @@
       "evalue": 5.51116e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5432",
+          "pref_name": "Mitogen-activated protein kinase kinase kinase kinase 3",
+          "organism": "Homo sapiens",
+          "n_activities": 256
+        }
+      ]
     },
     {
       "accession": "Q9UQB9",
@@ -991,7 +1632,15 @@
       "evalue": 1.69711e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3935",
+          "pref_name": "Aurora kinase C",
+          "organism": "Homo sapiens",
+          "n_activities": 195
+        }
+      ]
     },
     {
       "accession": "O14965",
@@ -1003,7 +1652,15 @@
       "evalue": 2.43731e-24,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4722",
+          "pref_name": "Aurora kinase A",
+          "organism": "Homo sapiens",
+          "n_activities": 3769
+        }
+      ]
     },
     {
       "accession": "Q13523",
@@ -1015,7 +1672,15 @@
       "evalue": 5.98772e-26,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1908382",
+          "pref_name": "Serine/threonine-protein kinase PRP4 homolog",
+          "organism": "Homo sapiens",
+          "n_activities": 19
+        }
+      ]
     },
     {
       "accession": "P15735",
@@ -1027,7 +1692,15 @@
       "evalue": 5.88422e-24,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL2349",
+          "pref_name": "Phosphorylase b kinase gamma catalytic chain, liver/testis isoform",
+          "organism": "Homo sapiens",
+          "n_activities": 80
+        }
+      ]
     },
     {
       "accession": "Q9UL54",
@@ -1039,7 +1712,15 @@
       "evalue": 6.51895e-23,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1075195",
+          "pref_name": "Serine/threonine-protein kinase TAO2",
+          "organism": "Homo sapiens",
+          "n_activities": 67
+        }
+      ]
     },
     {
       "accession": "Q9H422",
@@ -1051,7 +1732,15 @@
       "evalue": 2.64078e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4577",
+          "pref_name": "Homeodomain-interacting protein kinase 3",
+          "organism": "Homo sapiens",
+          "n_activities": 73
+        }
+      ]
     },
     {
       "accession": "Q13557",
@@ -1063,7 +1752,15 @@
       "evalue": 6.06077e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL2801",
+          "pref_name": "Calcium/calmodulin-dependent protein kinase type II subunit delta",
+          "organism": "Homo sapiens",
+          "n_activities": 218
+        }
+      ]
     },
     {
       "accession": "O96013",
@@ -1075,7 +1772,15 @@
       "evalue": 2.36783e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4482",
+          "pref_name": "Serine/threonine-protein kinase PAK 4",
+          "organism": "Homo sapiens",
+          "n_activities": 557
+        }
+      ]
     },
     {
       "accession": "Q16816",
@@ -1087,7 +1792,15 @@
       "evalue": 3.97879e-23,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4004",
+          "pref_name": "Phosphorylase b kinase gamma catalytic chain, skeletal muscle/heart isoform",
+          "organism": "Homo sapiens",
+          "n_activities": 60
+        }
+      ]
     },
     {
       "accession": "O94804",
@@ -1099,7 +1812,15 @@
       "evalue": 7.14587e-21,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3981",
+          "pref_name": "Serine/threonine-protein kinase 10",
+          "organism": "Homo sapiens",
+          "n_activities": 265
+        }
+      ]
     },
     {
       "accession": "Q9NQU5",
@@ -1111,7 +1832,15 @@
       "evalue": 2.90371e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4311",
+          "pref_name": "Serine/threonine-protein kinase PAK 6",
+          "organism": "Homo sapiens",
+          "n_activities": 46
+        }
+      ]
     },
     {
       "accession": "P57058",
@@ -1123,7 +1852,15 @@
       "evalue": 8.93582e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1795165",
+          "pref_name": "Hormonally up-regulated neu tumor-associated kinase",
+          "organism": "Homo sapiens",
+          "n_activities": 22
+        }
+      ]
     },
     {
       "accession": "O96017",
@@ -1135,7 +1872,15 @@
       "evalue": 3.83913e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL2527",
+          "pref_name": "Serine/threonine-protein kinase Chk2",
+          "organism": "Homo sapiens",
+          "n_activities": 740
+        }
+      ]
     },
     {
       "accession": "O14936",
@@ -1147,7 +1892,15 @@
       "evalue": 3.14843e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL1908381",
+          "pref_name": "Peripheral plasma membrane protein CASK",
+          "organism": "Homo sapiens",
+          "n_activities": 45
+        }
+      ]
     },
     {
       "accession": "Q9UBS0",
@@ -1159,7 +1912,15 @@
       "evalue": 5.13754e-22,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL3111",
+          "pref_name": "Ribosomal protein S6 kinase beta-2",
+          "organism": "Homo sapiens",
+          "n_activities": 21
+        }
+      ]
     },
     {
       "accession": "Q96RR4",
@@ -1171,7 +1932,15 @@
       "evalue": 3.6456e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5284",
+          "pref_name": "Calcium/calmodulin-dependent protein kinase kinase 2",
+          "organism": "Homo sapiens",
+          "n_activities": 246
+        }
+      ]
     },
     {
       "accession": "O60285",
@@ -1183,7 +1952,15 @@
       "evalue": 6.00971e-20,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL5784",
+          "pref_name": "NUAK family SNF1-like kinase 1",
+          "organism": "Homo sapiens",
+          "n_activities": 235
+        }
+      ]
     },
     {
       "accession": "Q13043",
@@ -1195,7 +1972,15 @@
       "evalue": 3.4243e-25,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4598",
+          "pref_name": "Serine/threonine-protein kinase 4",
+          "organism": "Homo sapiens",
+          "n_activities": 371
+        }
+      ]
     },
     {
       "accession": "Q13188",
@@ -1207,7 +1992,15 @@
       "evalue": 2.58582e-24,
       "afdb_path": null,
       "pdb_structures": null,
-      "role": "blast_hit"
+      "role": "blast_hit",
+      "chembl_targets": [
+        {
+          "target_chembl_id": "CHEMBL4708",
+          "pref_name": "Serine/threonine-protein kinase 3",
+          "organism": "Homo sapiens",
+          "n_activities": 291
+        }
+      ]
     }
   ]
 }
