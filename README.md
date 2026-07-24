@@ -208,6 +208,39 @@ huge ChEMBL/template counts, but a different CMGC subfamily) and from
 part of the original worked example, but with only 13 ChEMBL activities
 and no RCSB structures of its own).
 
+### Recommended workflow: rank before you fetch
+
+`--rank` doesn't require `--fetch`/`--fetch-all` to have run first --
+a row whose `pdb_structures` is still `None` (not yet checked) scores
+template class 1, the same as a row that *was* checked and had zero, so
+it never breaks the ranking, it just can't yet distinguish on that one
+axis. Since identity comes free with the initial search and ChEMBL
+activity counts are cheap (a couple of small REST calls per accession),
+ranking on those two plus family -- *before* spending any time on RCSB --
+is enough to see who's actually worth fetching structures for:
+
+```bash
+dd_idea-search Q8IZL9 -o CDK20_inhibition/pocket_detection
+dd_idea-search --chembl-activity-all -o CDK20_inhibition/pocket_detection
+dd_idea-search --rank -o CDK20_inhibition/pocket_detection --summary-format markdown
+# -> review hits_ranked.md, no PDB downloads have happened yet
+
+dd_idea-search --fetch P24941 P50613 Q16539 P28482 Q13627 Q00535 P06493 Q00534 Q13164 P49841 \
+    P53779 P45984 Q9Y463 P45983 Q14004 P68400 P49759 O43781 Q15759 P27361 \
+    -o CDK20_inhibition/pocket_detection
+# -> the top 20 accessions read straight off hits_ranked.md, pasted in by hand.
+#    Fetches structures for only those, instead of --fetch-all's every hit
+#    (CDK20's 99 hits: --fetch-all took several minutes and 420MB just for
+#    RCSB metadata scans/downloads; a top-20 shortlist is a fraction of that)
+
+dd_idea-search --rank -o CDK20_inhibition/pocket_detection
+# -> re-run to fold the now-known template counts into the ranking too
+```
+
+`--fetch-all` is still there for when you actually want everything (e.g.
+a final, exhaustive pass once a target's shortlist is settled) -- it's
+just not the first thing to reach for.
+
 ## Installation
 
 Requires Biopython, pandas, numpy, PyMOL (`pymol2`, importable as a library
