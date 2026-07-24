@@ -118,12 +118,29 @@ class RankedHit:
         return self.identity_class * self.templates_class * self.activity_class * self.family_class
 
 
+def _template_count(row: dict) -> Optional[int]:
+    """The best RCSB-template-count signal available for a row: the exact,
+    resolution-filtered count from an actual `--fetch`/`--fetch-all`
+    (`pdb_structures`) if one has happened, else the cheaper, resolution-
+    unfiltered total from `--pdb-count`/`--pdb-count-all` (`pdb_count`) if
+    *that* has happened, else `None` ("not checked either way yet")."""
+    if row["pdb_structures"] is not None:
+        return len(row["pdb_structures"])
+    return row.get("pdb_count")
+
+
 def rank_hits(out_dir: Union[str, Path], *, n_classes: int = N_CLASSES) -> List[RankedHit]:
     """Rank every `role == "blast_hit"` row in `{out_dir}/hits.json` by
     the product of four 1..n_classes ordinal scores (identity, RCSB
     template count, ChEMBL activity count, family relatedness to the
-    seed), highest first. Rows where `--fetch`/`--chembl-activity` haven't
-    been run yet (`pdb_structures`/`chembl_targets` still `None`) are
+    seed), highest first. RCSB template count prefers an exact,
+    resolution-filtered `--fetch`/`--fetch-all` count when available, but
+    falls back to the cheap, resolution-unfiltered `--pdb-count`/
+    `--pdb-count-all` total so real template availability can inform the
+    ranking *before* any actual structure download happens (see
+    `_template_count`) -- the whole point of ranking ahead of fetching.
+    Rows where neither RCSB signal nor `--chembl-activity` have been run
+    yet (`pdb_structures`/`pdb_count`/`chembl_targets` still `None`) are
     scored as if that count were 0 (class 1) -- "not yet checked" and
     "checked, found none" are deliberately not distinguished here, unlike
     in `hits.json` itself, since a ranking has to put every row somewhere."""
@@ -133,14 +150,14 @@ def rank_hits(out_dir: Union[str, Path], *, n_classes: int = N_CLASSES) -> List[
     hits = [r for r in result["hits"] if r["role"] == "blast_hit"]
 
     identities = [r["pct_identity"] for r in hits]
-    template_counts = [len(r["pdb_structures"] or []) for r in hits]
+    template_counts = [_template_count(r) or 0 for r in hits]
     activity_counts = [sum(t["n_activities"] for t in (r["chembl_targets"] or [])) for r in hits]
 
     ranked = []
     for r, n_templ, n_act in zip(hits, template_counts, activity_counts):
         ranked.append(RankedHit(
             accession=r["accession"], gene=r["gene"], pct_identity=r["pct_identity"],
-            n_templates=None if r["pdb_structures"] is None else n_templ,
+            n_templates=_template_count(r),
             n_activities=None if r["chembl_targets"] is None else n_act,
             family=r["family"],
             identity_class=classify_range(r["pct_identity"], identities, n_classes=n_classes),

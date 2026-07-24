@@ -49,6 +49,19 @@ def list_pdb_ids_for_uniprot(accession: str) -> List[str]:
     return [hit["identifier"] for hit in json.loads(body).get("result_set", [])]
 
 
+def count_structures_for_uniprot(accession: str) -> int:
+    """How many RCSB entries (any resolution, any experimental method) are
+    cross-referenced to `accession` -- reuses the single lightweight
+    search-API call `list_pdb_ids_for_uniprot` already makes, with no
+    per-entry metadata lookup and no downloads (unlike
+    `list_all_structures_at_resolution`/`select_pdb_structures`, which need
+    both to apply a resolution cutoff or pick specific entries). Lets
+    `search.py`'s `--pdb-count` give `--rank` a real (if resolution-
+    unfiltered) signal of RCSB template availability before any actual
+    `--fetch` happens."""
+    return len(list_pdb_ids_for_uniprot(accession))
+
+
 @dataclass
 class EntryMetadata:
     pdb_id: str

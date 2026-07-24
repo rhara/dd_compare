@@ -6,7 +6,7 @@ this module calls its own `list_pdb_ids_for_uniprot`/
 from unittest.mock import patch
 
 from dd_idea.rcsb import EntryMetadata
-from dd_idea.rcsb.fetch import list_all_structures_at_resolution
+from dd_idea.rcsb.fetch import count_structures_for_uniprot, list_all_structures_at_resolution
 
 
 def _fake_download(pdb_id, dest):
@@ -35,3 +35,14 @@ def test_list_all_structures_at_resolution_downloads_into_subdir_when_given(tmp_
 
     assert len(kept) == 1
     assert kept[0]["pdb_path"] == str(tmp_path / "raw_pdb" / "CDK2" / "1AAA.pdb")
+
+
+def test_count_structures_for_uniprot_counts_without_downloading():
+    with patch("dd_idea.rcsb.fetch.list_pdb_ids_for_uniprot", return_value=["1AAA", "1BBB", "1CCC"]) as mocked:
+        assert count_structures_for_uniprot("P00000") == 3
+    mocked.assert_called_once_with("P00000")
+
+
+def test_count_structures_for_uniprot_zero_when_none():
+    with patch("dd_idea.rcsb.fetch.list_pdb_ids_for_uniprot", return_value=[]):
+        assert count_structures_for_uniprot("P00000") == 0

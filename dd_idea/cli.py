@@ -6,6 +6,7 @@
   dd_idea-search QUERY -o out_dir   (UniProt accession, ChEMBL target ID, or a raw sequence -- table only)
   dd_idea-search --fetch ACC [ACC ...] -o out_dir   (or --fetch-all -- downloads templates for hits.json rows)
   dd_idea-search --chembl-activity ACC [ACC ...] -o out_dir   (or --chembl-activity-all -- counts ChEMBL bioactivity)
+  dd_idea-search --pdb-count ACC [ACC ...] -o out_dir   (or --pdb-count-all -- counts RCSB structures, no downloads)
   dd_idea-search --rank -o out_dir   (prints hits.json rows ranked by identity/templates/activity/family)
 """
 from __future__ import annotations
@@ -202,11 +203,21 @@ def build_search_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--chembl-activity-all", action="store_true", help="Like --chembl-activity, but for every row in hits.json")
     parser.add_argument(
+        "--pdb-count", metavar="ACC", nargs="+", default=None,
+        help="Instead of a new search, count how many RCSB structures exist for these accessions from an "
+             "existing hits.json in --out-dir -- a single lightweight search-API call per accession, no "
+             "resolution filtering, no downloads (unlike --fetch/--fetch-all). Lets --rank factor in real "
+             "RCSB template availability before deciding which accessions are worth an actual --fetch.",
+    )
+    parser.add_argument("--pdb-count-all", action="store_true", help="Like --pdb-count, but for every row in hits.json")
+    parser.add_argument(
         "--rank", action="store_true",
         help="Instead of a new search, print every blast_hit row in an existing hits.json ranked by combined "
              "usefulness (identity, RCSB template count, ChEMBL activity count, family relatedness to the seed -- "
-             "see dd_idea.rank's module docstring for how these combine). Pure computation, no network access; "
-             "rows --fetch/--chembl-activity haven't touched yet are scored as if their count were 0.",
+             "see dd_idea.rank's module docstring for how these combine). Pure computation, no network access. "
+             "RCSB template count prefers an exact --fetch/--fetch-all count when available, else falls back to "
+             "the cheaper --pdb-count/--pdb-count-all total; rows neither has touched (nor --chembl-activity, for "
+             "the activity axis) are scored as if their count were 0.",
     )
     parser.add_argument("--summary-format", choices=["table", "csv", "markdown"], default="table", help="table (stdout only, default) also written as csv/markdown to out_dir")
     parser.add_argument("--no-progress", action="store_true", help="Suppress the one-line-per-item progress output")
@@ -223,9 +234,17 @@ def _n_chembl_activities(r: dict) -> str:
     return str(sum(t["n_activities"] for t in r["chembl_targets"]))
 
 
+def _n_pdb_templates(r: dict) -> str:
+    if r["pdb_structures"] is not None:
+        return str(len(r["pdb_structures"]))
+    if r.get("pdb_count") is not None:
+        return f"{r['pdb_count']}*"  # '*' marks an unfiltered --pdb-count total, not an actual --fetch
+    return "-"
+
+
 def _summary_headers_row(r: dict) -> list:
     evalue_str = "-" if r["role"] == "seed" else f"{r['evalue']:.2g}"
-    n_templates = "-" if r["pdb_structures"] is None else str(len(r["pdb_structures"]))
+    n_templates = _n_pdb_templates(r)
     return [
         str(r["accession"] or "(sequence)"), r["gene"], r["organism"], r["family"], str(r["length"]),
         f"{r['pct_identity']:.1f}", evalue_str, n_templates, _n_chembl_activities(r),
@@ -293,7 +312,9 @@ def _print_rank_table(ranked: list) -> None:
     for row in rows:
         print(fmt.format(*row))
     print(
-        "\n(\"?\" = --fetch/--chembl-activity not yet run for that row, scored as 0/class 1; "
+        "\n(\"?\" = neither --fetch/--fetch-all nor --pdb-count/--pdb-count-all (for #Templ), or "
+        "--chembl-activity/--chembl-activity-all (for #Activ), has run yet for that row -- scored as 0/class 1; "
+        "#Templ prefers an exact --fetch count over a --pdb-count total when both are on record; "
         "Score = Id.Cls x T.Cls x A.Cls x Fam.Cls, each 1-5, see dd_idea.rank's module docstring)"
     )
 
@@ -318,7 +339,10 @@ def _write_rank_summary(ranked: list, out_dir: str, fmt: str) -> None:
 def main_search(argv=None) -> None:
     args = build_search_parser().parse_args(argv)
     show_progress = not args.no_progress
-    enrichment_mode = args.fetch_all or args.fetch or args.chembl_activity_all or args.chembl_activity or args.rank
+    enrichment_mode = (
+        args.fetch_all or args.fetch or args.chembl_activity_all or args.chembl_activity
+        or args.pdb_count_all or args.pdb_count or args.rank
+    )
 
     if enrichment_mode and args.query:
         print(f"[note] ignoring QUERY ({args.query!r}) -- enrichment flags operate on the existing hits.json in {args.out_dir}")
@@ -341,6 +365,15 @@ def main_search(argv=None) -> None:
         _print_and_write_summary(rows, args)
         n_activities = sum(_int_or_zero(_n_chembl_activities(r)) for r in rows)
         print(f"\n[done] ChEMBL activity counted -> {n_activities} activity record(s) total -> {args.out_dir}/hits.json")
+        return
+
+    if args.pdb_count_all or args.pdb_count:
+        accessions = "all" if args.pdb_count_all else args.pdb_count
+        result = search_module.count_pdb_structures(args.out_dir, accessions, show_progress=show_progress)
+        rows = result["hits"]
+        _print_and_write_summary(rows, args)
+        n_structures = sum(r["pdb_count"] for r in rows if r["pdb_count"] is not None)
+        print(f"\n[done] RCSB structures counted -> {n_structures} structure(s) total (unfiltered) -> {args.out_dir}/hits.json")
         return
 
     if args.rank:

@@ -12,6 +12,7 @@ from .fetch import (
     RCSB_PDB,
     RCSB_SEARCH,
     EntryMetadata,
+    count_structures_for_uniprot,
     download_pdb,
     fetch_entry_metadata,
     list_all_structures_at_resolution,
@@ -27,7 +28,7 @@ from .select import (
 
 __all__ = [
     "RCSB_SEARCH", "RCSB_ENTRY", "RCSB_PDB",
-    "list_pdb_ids_for_uniprot", "EntryMetadata", "fetch_entry_metadata", "download_pdb",
+    "list_pdb_ids_for_uniprot", "count_structures_for_uniprot", "EntryMetadata", "fetch_entry_metadata", "download_pdb",
     "list_all_structures_at_resolution",
     "ChainSequence", "Residue", "extract_chain_sequences", "ResidueAlignment", "ChainAlignment",
     "align_to_canonical", "pick_target_chain",

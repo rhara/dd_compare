@@ -3,7 +3,7 @@ no network access (rank_hits itself reads a pre-built hits.json fixture
 via tmp_path, no live search.search()/fetch_templates() call)."""
 import json
 
-from dd_idea.rank import classify_family, classify_range, classify_zero_inflated, rank_hits
+from dd_idea.rank import _template_count, classify_family, classify_range, classify_zero_inflated, rank_hits
 
 CDK20_FAMILY = "Belongs to the protein kinase superfamily. CMGC Ser/Thr protein kinase family. CDC2/CDKX subfamily"
 CDK2_FAMILY = CDK20_FAMILY  # same subfamily as CDK20
@@ -76,10 +76,11 @@ def _hits_json(tmp_path, hits):
     return out_dir
 
 
-def _hit_row(acc, gene, family, pct_identity, n_templates, n_activities):
+def _hit_row(acc, gene, family, pct_identity, n_templates, n_activities, *, pdb_count=None):
     return {
         "accession": acc, "gene": gene, "family": family, "pct_identity": pct_identity, "evalue": 1e-50,
         "pdb_structures": None if n_templates is None else [{"pdb_id": "X"}] * n_templates,
+        "pdb_count": pdb_count,
         "chembl_targets": None if n_activities is None else [{"target_chembl_id": "T1", "n_activities": n_activities}],
         "role": "blast_hit",
     }
@@ -111,3 +112,38 @@ def test_rank_hits_excludes_seed_row(tmp_path):
     out_dir = _hits_json(tmp_path, [_hit_row("HIT1", "GENE1", CDK2_FAMILY, 40.0, 1, 1)])
     ranked = rank_hits(out_dir)
     assert "SEED" not in [h.accession for h in ranked]
+
+
+def test_template_count_prefers_fetched_over_pdb_count():
+    # pdb_structures (an actual --fetch, resolution-filtered) wins over a
+    # cheaper --pdb-count total even when both are on record.
+    row = _hit_row("X", "X1", CDK2_FAMILY, 40.0, n_templates=2, n_activities=None, pdb_count=500)
+    assert _template_count(row) == 2
+
+
+def test_template_count_falls_back_to_pdb_count_when_not_fetched():
+    row = _hit_row("X", "X1", CDK2_FAMILY, 40.0, n_templates=None, n_activities=None, pdb_count=500)
+    assert _template_count(row) == 500
+
+
+def test_template_count_none_when_neither_checked():
+    row = _hit_row("X", "X1", CDK2_FAMILY, 40.0, n_templates=None, n_activities=None, pdb_count=None)
+    assert _template_count(row) is None
+
+
+def test_rank_hits_uses_pdb_count_before_any_fetch_has_happened(tmp_path):
+    # This is the whole point of --pdb-count: a hit set can be meaningfully
+    # ranked on real RCSB template availability *before* --fetch/--fetch-all
+    # ever runs, unlike when pdb_structures alone (still None for everyone)
+    # would leave every row tied at templates_class 1.
+    out_dir = _hits_json(tmp_path, [
+        _hit_row("MANY", "CDK2", CDK2_FAMILY, 44.0, n_templates=None, n_activities=None, pdb_count=500),
+        _hit_row("NONE", "MAK", CDK2_FAMILY, 35.0, n_templates=None, n_activities=None, pdb_count=0),
+    ])
+    ranked = rank_hits(out_dir)
+    many = next(h for h in ranked if h.accession == "MANY")
+    none = next(h for h in ranked if h.accession == "NONE")
+    assert many.n_templates == 500
+    assert none.n_templates == 0
+    assert many.templates_class > none.templates_class
+    assert many.score > none.score

@@ -7,15 +7,20 @@ and build a reviewable table (UniProt family, gene, organism, length,
 %identity, e-value) -- deliberately *without* downloading anything yet.
 
 Atomic by design: `search()` only ever talks to UniProt + NCBI BLAST
-(small, fast requests) and writes `hits.json`. Two further, separate,
+(small, fast requests) and writes `hits.json`. Three further, separate,
 explicit steps enrich specific rows of that same `hits.json` only for
 accessions the caller actually asks for, after looking at the table
 `search()` produced -- `fetch_templates()` downloads AlphaFold models and
 RCSB structures (a protein with hundreds of RCSB entries, e.g. CDK2's 512,
 should never be downloaded by accident just because it BLAST-matched the
-seed), and `annotate_chembl_activity()` counts each accession's ChEMBL
-bioactivity records (cheap -- counts only, no data itself) to gauge how
-much SAR data exists for it.
+seed), `count_pdb_structures()` counts each accession's total RCSB entries
+without downloading any of them (cheap -- one search-API call per
+accession, no resolution filtering, no per-entry metadata) so `rank.py`
+can factor real template availability into a ranking *before* deciding
+which accessions are worth an actual `fetch_templates()` call, and
+`annotate_chembl_activity()` counts each accession's ChEMBL bioactivity
+records (cheap -- counts only, no data itself) to gauge how much SAR data
+exists for it.
 """
 from __future__ import annotations
 
@@ -107,21 +112,22 @@ def resolve_seed(query: str, out_dir: Union[str, Path], *, show_progress: bool =
 
 def _metadata_row(accession: Optional[str], entry: Optional[dict], *, pct_identity: float, evalue: Optional[float], length: Optional[int] = None, role: str) -> dict:
     """A `hits.json` row with UniProt metadata filled in but
-    `pdb_structures: None` (not yet fetched via `fetch_templates`) and
+    `pdb_structures: None` (not yet fetched via `fetch_templates`),
+    `pdb_count: None` (not yet counted via `count_pdb_structures`), and
     `chembl_targets: None` (not yet annotated via `annotate_chembl_activity`)
-    -- the shape `search()` writes for every row, before either later,
+    -- the shape `search()` writes for every row, before any later,
     optional enrichment step has touched anything."""
     if entry is None:
         return {
             "accession": accession, "gene": "-", "organism": "-", "family": "(no UniProt accession)",
             "length": length, "pct_identity": pct_identity, "evalue": evalue,
-            "afdb_path": None, "pdb_structures": None, "chembl_targets": None, "role": role,
+            "afdb_path": None, "pdb_structures": None, "pdb_count": None, "chembl_targets": None, "role": role,
         }
     return {
         "accession": accession, "gene": uniprot.gene_name(entry), "organism": uniprot.organism_name(entry),
         "family": uniprot.family_string(entry), "length": uniprot.canonical_length(entry),
         "pct_identity": pct_identity, "evalue": evalue, "afdb_path": None, "pdb_structures": None,
-        "chembl_targets": None, "role": role,
+        "pdb_count": None, "chembl_targets": None, "role": role,
     }
 
 
@@ -232,6 +238,42 @@ def fetch_templates(
         row["pdb_structures"] = rcsb.list_all_structures_at_resolution(
             acc, out_dir, resolution_cutoff=resolution_cutoff, subdir=_gene_subdir(acc, row), show_progress=show_progress,
         )
+
+    (out_dir / "hits.json").write_text(json.dumps(result, indent=2))
+    return result
+
+
+def count_pdb_structures(
+    out_dir: Union[str, Path], accessions: Union[List[str], str], *, show_progress: bool = True,
+) -> dict:
+    """For the given `accessions` (or `"all"`) out of an existing
+    `hits.json`, count how many RCSB entries exist for each accession
+    (`rcsb.count_structures_for_uniprot` -- a single lightweight search-API
+    call per accession, no per-entry metadata, no downloads) and set each
+    row's `pdb_count`. Unlike `fetch_templates`'s `pdb_structures` (which
+    only holds entries meeting a resolution cutoff, and only once actually
+    downloaded), this is a raw, resolution-unfiltered total -- cheap enough
+    to run over every hit before deciding which are worth an actual
+    `fetch_templates` call, exactly the same role `annotate_chembl_activity`
+    plays for ChEMBL coverage. Doesn't touch `pdb_structures` itself; once a
+    row has been through `fetch_templates`, `rank.py` prefers that more
+    precise, resolution-filtered count over this one."""
+    out_dir = Path(out_dir)
+    result = _load_hits_json(out_dir)
+    targets = _resolve_targets(result, accessions)
+
+    for i, (acc, row) in enumerate(targets.items(), start=1):
+        if show_progress:
+            print(f"[pdb-count] ({i}/{len(targets)}) {acc}: counting RCSB structures...", flush=True)
+        try:
+            n = rcsb.count_structures_for_uniprot(acc)
+        except Exception as e:
+            if show_progress:
+                print(f"[pdb-count] {acc}: RCSB lookup failed ({e}), skipping", flush=True)
+            continue
+        row["pdb_count"] = n
+        if show_progress:
+            print(f"[pdb-count] {acc}: {n} RCSB structure(s)", flush=True)
 
     (out_dir / "hits.json").write_text(json.dumps(result, indent=2))
     return result
