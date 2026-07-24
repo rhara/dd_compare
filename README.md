@@ -69,8 +69,8 @@ is what gets translated across proteins.
 ## Worked example: CDK20 vs. CDK2 vs. MAK
 
 ```bash
-dd_idea-run Q8IZL9 P24941 P20794 -o data/example_cdk20_cdk2_mak --reference Q8IZL9
-streamlit run app.py -- --report-dir data/example_cdk20_cdk2_mak
+dd_idea-run Q8IZL9 P24941 P20794 -o CDK20_inhibition/cross_protein_comparison --reference Q8IZL9
+streamlit run app.py -- --report-dir CDK20_inhibition/cross_protein_comparison
 ```
 
 Human CDK20 (Q8IZL9) has no experimental (PDB) structure at all; CDK2
@@ -83,8 +83,10 @@ residues, druggability 0.65) flags reference positions 14 and 131 as
 non-conservative in *both* CDK2 and MAK -- candidate CDK20-distinguishing
 pocket residues -- plus position 305 as an outright gap in CDK2 (whose
 canonical sequence, at 298 aa, is simply shorter than CDK20's 346).
-`data/example_cdk20_cdk2_mak/` is committed as a full worked example
-(fetched sequences/structures, `report.json`, superposed coordinates).
+`CDK20_inhibition/cross_protein_comparison/` is committed as a full worked
+example (fetched sequences/structures, `report.json`, superposed
+coordinates) -- part of an ongoing CDK20 inhibitor-discovery project that
+this tool's own validation run kicked off; see `CDK20_inhibition/README.md`.
 CDK2 also has three real, ligand-bound RCSB structures (`6Q4G`/`HJK` 0.98 Å,
 `6Q49`/`HGQ` 1.00 Å, `6Q4H`/`HGH` 1.00 Å) picked automatically by the
 real-structure overlay (see below) -- the app draws each as its own
@@ -201,7 +203,7 @@ real-structure overlay for CDK2 -- three distinct ligand-bound structures
 -- no extra fetch needed, just open the app against it:
 
 ```bash
-streamlit run app.py -- --report-dir data/example_cdk20_cdk2_mak
+streamlit run app.py -- --report-dir CDK20_inhibition/cross_protein_comparison
 ```
 
 Open the **Structure overlay** tab. In the sidebar's "Proteins to show"

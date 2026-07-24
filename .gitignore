@@ -6,9 +6,9 @@ __pycache__/
 !dd_idea/viewer3d/frontend/*.html
 .pytest_cache/
 
-data/*
-!data/example_cdk20_cdk2_mak/
+data/
+
 # fpocket's own scratch working directory (dozens of per-pocket candidate
 # files) -- fully regenerable via `dd_idea-align`; the pocket actually
 # selected is already captured in report.json's "pocket" field.
-data/example_cdk20_cdk2_mak/pocket/
+CDK20_inhibition/**/pocket/
