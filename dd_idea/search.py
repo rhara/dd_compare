@@ -149,7 +149,9 @@ def search(
     rows: List[dict] = [_metadata_row(
         seed.accession, seed.entry, pct_identity=100.0, evalue=None, length=len(seed.canonical_seq), role="seed",
     )]
-    for hit in hits:
+    for i, hit in enumerate(hits, start=1):
+        if show_progress:
+            print(f"[uniprot] ({i}/{len(hits)}) {hit.accession}: fetching metadata...", flush=True)
         entry = uniprot.fetch_uniprot_entry(hit.accession)
         rows.append(_metadata_row(hit.accession, entry, pct_identity=hit.pct_identity, evalue=hit.evalue, role="blast_hit"))
 
