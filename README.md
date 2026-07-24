@@ -168,6 +168,39 @@ PDB entry cross-referenced to more than one accession's UniProt record
 (e.g. a multi-chain structure) gets its own copy in each owning gene's
 subdirectory, so every gene folder stays self-contained.
 
+### Running the BLAST step manually via NCBI's web UI
+
+`dd_idea-search`'s own submission (`dd_idea/blast/query.py`) polls NCBI's
+BLAST URL API every 60s and prints each status change, but NCBI's own RTOE
+(estimated completion time) is a rough, server-load-dependent number --
+it can come back in the thousands of seconds on a busy queue even though
+the actual search often finishes in well under a minute. If a search feels
+stuck, running it through NCBI's web UI instead and dropping the result
+into the same cache location `dd_idea-search` reads from is often faster
+and lets you watch NCBI's own progress page directly:
+
+1. Open [NCBI Protein BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PROGRAM=blastp&PAGE_TYPE=BlastSearch&LINK_LOC=blasthome).
+2. Paste the accession (e.g. `Q8IZL9`) or a raw sequence into the query box.
+3. Database: **UniProtKB/Swiss-Prot(swissprot)**.
+4. Under "Organism," add **Homo sapiens** -- matching `dd_idea-search`'s
+   default organism restriction (skip this if you're going to run
+   `dd_idea-search --any-organism`).
+5. Open "Algorithm parameters" and set **Expect threshold** to `1e-10`
+   (matching `dd_idea-search`'s default `--evalue`; leave **Max target
+   sequences** at its default 100, matching `--max-hits`). If you're
+   using a non-default `--evalue`/`--max-hits`, match those here too --
+   `dd_idea-search` doesn't check what parameters a cached XML was
+   actually generated with.
+6. Click **BLAST** and wait for the results page (NCBI's own page polls
+   and updates itself; the RID it assigns can also be checked anytime at
+   `https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Get&FORMAT_OBJECT=SearchInfo&RID=<RID>`).
+7. On the results page, click **Download All** -> **XML**.
+8. Save the downloaded file as `{out_dir}/raw_blast/blastp_swissprot.xml`
+   -- the exact directory/file name `dd_idea-search` itself caches to.
+9. Run `dd_idea-search ACCESSION -o {out_dir}` again as normal -- it finds
+   the file already there, skips submitting a new NCBI search entirely,
+   and goes straight to resolving UniProt metadata for the hits.
+
 ### `--rank`: combining the four signals
 
 Once a hit set has identity, template, activity, and family data,

@@ -161,6 +161,41 @@ ChEMBLカバレッジに3000倍超の開き(GSK3B: 7448件の活性データ、C
 所属する各geneのサブディレクトリにそれぞれコピーされ、各geneフォルダが
 自己完結するようになっている。
 
+### NCBIのWeb UIから手動でBLASTを実行する方法
+
+`dd_idea-search`自身の投入処理(`dd_idea/blast/query.py`)はNCBIのBLAST URL
+APIを60秒ごとにポーリングし、状態が変わるたびに出力するが、NCBIが返す
+RTOE(推定完了時間)自体はサーバー負荷に依存する大まかな数値に過ぎず
+——混雑時には実際には1分もかからず終わる検索でも、数千秒という見積もりが
+返ってくることがある。検索が止まっているように感じたら、代わりにNCBIの
+Web UIから実行し、その結果を`dd_idea-search`自身が読みに行くのと同じ
+キャッシュ場所に置く方が速いことが多く、NCBI自身の進捗ページを直接見ながら
+進められる:
+
+1. [NCBI Protein BLAST](https://blast.ncbi.nlm.nih.gov/Blast.cgi?PROGRAM=blastp&PAGE_TYPE=BlastSearch&LINK_LOC=blasthome)を開く。
+2. アクセッション(例: `Q8IZL9`)または生の配列をクエリ欄に貼り付ける。
+3. Database: **UniProtKB/Swiss-Prot(swissprot)**を選択。
+4. "Organism"に**Homo sapiens**を追加——`dd_idea-search`のデフォルトの
+   生物種限定と合わせるため(`dd_idea-search --any-organism`を使う予定
+   なら省略してよい)。
+5. "Algorithm parameters"を開き、**Expect threshold**を`1e-10`に設定
+   (`dd_idea-search`のデフォルト`--evalue`と一致させる。**Max target
+   sequences**はデフォルトの100のままで`--max-hits`のデフォルトと一致
+   する)。`--evalue`/`--max-hits`をデフォルト以外で使うつもりなら、
+   ここも合わせて変更すること——`dd_idea-search`はキャッシュされた
+   XMLが実際にどのパラメータで生成されたかをチェックしない。
+6. **BLAST**をクリックして結果ページを待つ(NCBI自身のページが自動的に
+   ポーリング・更新される。割り当てられたRIDは
+   `https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Get&FORMAT_OBJECT=SearchInfo&RID=<RID>`
+   でいつでも確認できる)。
+7. 結果ページで**Download All** → **XML**をクリック。
+8. ダウンロードしたファイルを`{out_dir}/raw_blast/blastp_swissprot.xml`
+   として保存する——`dd_idea-search`自身がキャッシュに使うディレクトリ名・
+   ファイル名と正確に一致させること。
+9. 通常通り`dd_idea-search ACCESSION -o {out_dir}`を再実行する——既に
+   ファイルがあることを検知し、NCBIへの新規検索投入を完全にスキップして、
+   そのままヒットのUniProtメタデータ解決へ進む。
+
 ### `--rank`: 4つのシグナルを組み合わせる
 
 同一性・テンプレート・活性データ・familyの情報が揃ったら、`--rank`が
