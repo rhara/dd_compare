@@ -249,8 +249,13 @@ biologically):
   (four possible match depths), so finer bins would only split ties, not
   add information.
 
-The composite score is the product of the four classes (1-10000 with the
-defaults: 5 x 20 x 20 x 5). For CDK20, this correctly separates "close
+The composite score is the product of the four classes, rescaled to
+0.0-1.0 by dividing by the highest score any row could reach (1-10000
+with the defaults: 5 x 20 x 20 x 5) -- `--rank`'s table and
+`hits_ranked.md`/`.csv` show only this rescaled `Score`
+(`RankedHit.normalized_score`), not the raw product, so it stays directly
+comparable across runs made with different `n_classes`/`count_classes`
+settings. For CDK20, this correctly separates "close
 paralog with real data" (CDK2/CDK7/CDK9, all in the same CDC2/CDKX
 subfamily with strong identity, dozens to hundreds of templates, and
 hundreds to thousands of activities) from "well-studied kinase but a more
