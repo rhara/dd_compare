@@ -222,35 +222,45 @@ dd_idea-search --rank -o CDK20_inhibition/pocket_detection
 The four signals live on very different scales (ChEMBL activity counts
 span 0-7000+; RCSB template counts are zero for roughly half of any
 typical hit set; %identity is a compact, roughly continuous 20-50% band),
-so `dd_idea.rank` converts each to an ordinal 1-5 class *before*
-combining, rather than multiplying raw magnitudes (which would let
-whichever metric happens to have the largest numbers dominate regardless
-of what it means biologically):
+so `dd_idea.rank` converts each to an ordinal class *before* combining,
+rather than multiplying raw magnitudes (which would let whichever metric
+happens to have the largest numbers dominate regardless of what it means
+biologically):
 
-- **Identity class** -- quantile bin of `%identity` among the hit set.
-- **Template/activity class** -- zero always gets class 1 on its own
-  (about half of CDK20's hits have zero RCSB structures, so folding that
-  into the bottom quantile would compress every real nonzero count into
-  one or two classes); nonzero values are then quantile-binned among just
-  the other nonzero values. The template count itself prefers an exact,
-  resolution-filtered `--fetch`/`--fetch-all` count when a row has one, but
-  falls back to the cheaper, resolution-unfiltered `--pdb-count`/
-  `--pdb-count-all` total otherwise -- see "Recommended workflow" below for
-  why that fallback is the whole point.
-- **Family class** -- how deep a hit's UniProt family hierarchy
+- **Identity class** (1-5) -- quantile bin of `%identity` among the hit set.
+- **Template/activity class** (1-20 by default) -- zero always gets class 1
+  on its own (about half of CDK20's hits have zero RCSB structures, so
+  folding that into the bottom quantile would compress every real nonzero
+  count into one or two classes); nonzero values are then quantile-binned
+  among just the other nonzero values. Wider than identity/family by
+  default (`count_classes`, see `dd_idea.rank.rank_hits`) because these two
+  signals span a much wider raw range (hundreds of templates, thousands of
+  activities) -- 5 classes routinely tied hits with real, meaningfully
+  different counts (e.g. 522 vs. 28 templates both landing in class 5). The
+  template count itself prefers an exact, resolution-filtered `--fetch`/
+  `--fetch-all` count when a row has one, but falls back to the cheaper,
+  resolution-unfiltered `--pdb-count`/`--pdb-count-all` total otherwise --
+  see "Recommended workflow" below for why that fallback is the whole point.
+- **Family class** (1-5) -- how deep a hit's UniProt family hierarchy
   (superfamily -> family -> subfamily) matches the seed's, from the top:
   exact subfamily match -> top class; same family, different subfamily
-  -> one below; only the superfamily matches -> the middle class.
+  -> one below; only the superfamily matches -> the middle class. Kept at
+  5 classes unlike template/activity -- it's a genuinely discrete signal
+  (four possible match depths), so finer bins would only split ties, not
+  add information.
 
-The composite score is the product of the four classes (1-625). For
-CDK20, this correctly separates "close paralog with real data" (CDK2 and
-CDK7, both scoring the maximum 625: identical CDC2/CDKX subfamily, strong
-identity, dozens of templates, hundreds+ of activities) from "well-studied
-kinase but a more distant relative" (MAPK14/MAPK1/DYRK1A, score 400 --
-huge ChEMBL/template counts, but a different CMGC subfamily) and from
-"structurally interesting but data-poor" (e.g. MAK, family-matched and
-part of the original worked example, but with only 13 ChEMBL activities
-and no RCSB structures of its own).
+The composite score is the product of the four classes (1-10000 with the
+defaults: 5 x 20 x 20 x 5). For CDK20, this correctly separates "close
+paralog with real data" (CDK2/CDK7/CDK9, all in the same CDC2/CDKX
+subfamily with strong identity, dozens to hundreds of templates, and
+hundreds to thousands of activities) from "well-studied kinase but a more
+distant relative" (MAPK14/MAPK1/DYRK1A -- huge ChEMBL/template counts, but
+a different CMGC subfamily) and from "structurally interesting but
+data-poor" (e.g. MAK, family-matched and part of the original worked
+example, but with only 13 ChEMBL activities and no RCSB structures of its
+own) -- and, thanks to the wider template/activity granularity, also
+separates CDK2 (522 templates, 3015 activities) from CDK9 (28 templates,
+2051 activities) instead of tying them.
 
 ### Recommended workflow: rank before you fetch
 
