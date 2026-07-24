@@ -1,13 +1,13 @@
 {
   "reference": "Q8IZL9",
   "pocket": {
-    "receptor_pdb": "/home/rhara/work/dd_idea/data/example_cdk20_cdk2_mak/raw/Q8IZL9_AFDB.pdb",
+    "receptor_pdb": "/Users/rhara/work/dd_idea/CDK20_inhibition/cross_protein_comparison/raw/Q8IZL9_AFDB.pdb",
     "fpocket_id": 21,
     "rank": 1,
     "score": -0.166,
     "druggability_score": 0.646,
     "n_alpha_spheres": 95,
-    "volume": 817.166,
+    "volume": 805.223,
     "residues": [
       "A:10",
       "A:11",
@@ -49,7 +49,7 @@
       "rmsd": 0.0,
       "n_aligned_atoms": 0,
       "chain": "A",
-      "aligned_pdb": "/home/rhara/work/dd_idea/data/example_cdk20_cdk2_mak/aligned/Q8IZL9_aligned.pdb",
+      "aligned_pdb": "/Users/rhara/work/dd_idea/CDK20_inhibition/cross_protein_comparison/aligned/Q8IZL9_aligned.pdb",
       "align_error": null,
       "pocket_comparison": [
         {
@@ -228,10 +228,10 @@
       "name": "Cyclin-dependent kinase 2",
       "length": 298,
       "pct_identity": 44.10774410774411,
-      "rmsd": 3.386834728298077,
+      "rmsd": 3.3868347282980604,
       "n_aligned_atoms": 264,
       "chain": "A",
-      "aligned_pdb": "/home/rhara/work/dd_idea/data/example_cdk20_cdk2_mak/aligned/P24941_aligned.pdb",
+      "aligned_pdb": "/Users/rhara/work/dd_idea/CDK20_inhibition/cross_protein_comparison/aligned/P24941_aligned.pdb",
       "align_error": null,
       "pocket_comparison": [
         {
@@ -409,7 +409,7 @@
           "resolution": 0.98,
           "ligand_resname": "HJK",
           "chain": "A",
-          "aligned_pdb": "/home/rhara/work/dd_idea/data/example_cdk20_cdk2_mak/aligned_pdb/P24941_pdb0_aligned.pdb",
+          "aligned_pdb": "/Users/rhara/work/dd_idea/CDK20_inhibition/cross_protein_comparison/aligned_pdb/P24941_pdb0_aligned.pdb",
           "rmsd": 2.8502376178352913,
           "n_aligned_atoms": 280,
           "error": null,
@@ -444,7 +444,7 @@
           "resolution": 1.0,
           "ligand_resname": "HGQ",
           "chain": "A",
-          "aligned_pdb": "/home/rhara/work/dd_idea/data/example_cdk20_cdk2_mak/aligned_pdb/P24941_pdb1_aligned.pdb",
+          "aligned_pdb": "/Users/rhara/work/dd_idea/CDK20_inhibition/cross_protein_comparison/aligned_pdb/P24941_pdb1_aligned.pdb",
           "rmsd": 3.5917421202376043,
           "n_aligned_atoms": 264,
           "error": null,
@@ -479,8 +479,8 @@
           "resolution": 1.0,
           "ligand_resname": "HGH",
           "chain": "A",
-          "aligned_pdb": "/home/rhara/work/dd_idea/data/example_cdk20_cdk2_mak/aligned_pdb/P24941_pdb2_aligned.pdb",
-          "rmsd": 3.589046034911413,
+          "aligned_pdb": "/Users/rhara/work/dd_idea/CDK20_inhibition/cross_protein_comparison/aligned_pdb/P24941_pdb2_aligned.pdb",
+          "rmsd": 3.5890460349114437,
           "n_aligned_atoms": 264,
           "error": null,
           "pocket_resseq": {
@@ -516,10 +516,10 @@
       "name": "Serine/threonine-protein kinase MAK",
       "length": 623,
       "pct_identity": 36.54970760233918,
-      "rmsd": 2.5314280599090044,
+      "rmsd": 2.5314280599089845,
       "n_aligned_atoms": 288,
       "chain": "A",
-      "aligned_pdb": "/home/rhara/work/dd_idea/data/example_cdk20_cdk2_mak/aligned/P20794_aligned.pdb",
+      "aligned_pdb": "/Users/rhara/work/dd_idea/CDK20_inhibition/cross_protein_comparison/aligned/P20794_aligned.pdb",
       "align_error": null,
       "pocket_comparison": [
         {

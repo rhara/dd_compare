@@ -13,8 +13,12 @@ data/
 # selected is already captured in report.json's "pocket" field.
 CDK20_inhibition/**/pocket/
 
-# dd_idea-search's raw BLAST XML / downloaded RCSB structures -- both fully
+# dd_idea-search's raw BLAST XML / bulk-downloaded RCSB structures (a
+# well-studied BLAST hit can mean hundreds of PDB files) -- both fully
 # regenerable via `dd_idea-search`/`--fetch` (see hits.json for what was
-# found/selected); a well-studied BLAST hit can mean hundreds of PDB files.
-CDK20_inhibition/**/raw_blast/
-CDK20_inhibition/**/raw_pdb/
+# found/selected). Scoped to pocket_detection/ only -- unlike
+# cross_protein_comparison/raw_pdb/, which holds a small, deliberately
+# curated set of real structures (dd_idea-fetch's --pdb-max-structures,
+# default 3 per protein) that's part of the committed worked example.
+CDK20_inhibition/pocket_detection/raw_blast/
+CDK20_inhibition/pocket_detection/raw_pdb/
