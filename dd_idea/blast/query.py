@@ -11,7 +11,9 @@ Biopython's own 10-minutes-and-counting warning fires."""
 from __future__ import annotations
 
 import re
+import socket
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Union
 from urllib.parse import urlencode
@@ -21,9 +23,28 @@ _NCBI_URL = "https://blast.ncbi.nlm.nih.gov/Blast.cgi"
 _USER_AGENT = "dd_idea (github.com/rhara/dd_idea)"
 
 
+@contextmanager
+def _ipv4_only():
+    """blast.ncbi.nlm.nih.gov resolves to both an IPv6 and an IPv4 address;
+    on networks where IPv6 is routed but silently black-holed, `urllib`
+    (unlike curl's Happy Eyeballs) tries the IPv6 address first and blocks
+    for the OS's full TCP connect timeout -- tens of seconds -- before ever
+    trying IPv4. Restrict resolution to IPv4 for the duration of the call."""
+    original = socket.getaddrinfo
+
+    def _getaddrinfo_ipv4(host, port, family=0, type=0, proto=0, flags=0):
+        return original(host, port, socket.AF_INET, type, proto, flags)
+
+    socket.getaddrinfo = _getaddrinfo_ipv4
+    try:
+        yield
+    finally:
+        socket.getaddrinfo = original
+
+
 def _post(params: dict) -> str:
     request = Request(_NCBI_URL, urlencode(params).encode(), {"User-Agent": _USER_AGENT})
-    with urlopen(request) as handle:
+    with _ipv4_only(), urlopen(request, timeout=60) as handle:
         return handle.read().decode()
 
 
@@ -73,11 +94,13 @@ def run_blastp(
             flush=True,
         )
 
-    # NCBI usage guidelines: don't poll more than once/minute per RID, and
-    # not more often than every 10s overall -- use RTOE as the first wait
-    # (typically the closest estimate NCBI itself gives for this search).
+    # NCBI usage guidelines: don't poll more than once/minute per RID. Use
+    # RTOE as the first wait, but cap it at that same 60s -- RTOE is a rough
+    # server-load-dependent estimate and can come back in the thousands of
+    # seconds on a busy queue, which would otherwise leave the first status
+    # check (and thus the first sign of life after submission) that far away.
     poll_params = {"CMD": "Get", "FORMAT_OBJECT": "SearchInfo", "RID": rid}
-    delay = max(rtoe or 20, 20)
+    delay = min(max(rtoe or 20, 20), 60)
     start = time.time()
     while True:
         time.sleep(delay)
