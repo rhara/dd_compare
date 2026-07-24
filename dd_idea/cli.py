@@ -6,13 +6,14 @@
   dd_idea-search QUERY -o out_dir   (UniProt accession, ChEMBL target ID, or a raw sequence -- table only)
   dd_idea-search --fetch ACC [ACC ...] -o out_dir   (or --fetch-all -- downloads templates for hits.json rows)
   dd_idea-search --chembl-activity ACC [ACC ...] -o out_dir   (or --chembl-activity-all -- counts ChEMBL bioactivity)
+  dd_idea-search --rank -o out_dir   (prints hits.json rows ranked by identity/templates/activity/family)
 """
 from __future__ import annotations
 
 import argparse
 import csv
 
-from . import pipeline, search as search_module
+from . import pipeline, rank as rank_module, search as search_module
 
 
 def _add_pdb_fetch_args(parser: argparse.ArgumentParser) -> None:
@@ -200,6 +201,13 @@ def build_search_parser() -> argparse.ArgumentParser:
              "accessions from an existing hits.json in --out-dir.",
     )
     parser.add_argument("--chembl-activity-all", action="store_true", help="Like --chembl-activity, but for every row in hits.json")
+    parser.add_argument(
+        "--rank", action="store_true",
+        help="Instead of a new search, print every blast_hit row in an existing hits.json ranked by combined "
+             "usefulness (identity, RCSB template count, ChEMBL activity count, family relatedness to the seed -- "
+             "see dd_idea.rank's module docstring for how these combine). Pure computation, no network access; "
+             "rows --fetch/--chembl-activity haven't touched yet are scored as if their count were 0.",
+    )
     parser.add_argument("--summary-format", choices=["table", "csv", "markdown"], default="table", help="table (stdout only, default) also written as csv/markdown to out_dir")
     parser.add_argument("--no-progress", action="store_true", help="Suppress the one-line-per-item progress output")
     return parser
@@ -264,10 +272,53 @@ def _print_and_write_summary(rows: list, args) -> None:
         _write_search_summary(rows, args.out_dir, args.summary_format)
 
 
+_RANK_TABLE_HEADERS = ["Rank", "Accession", "Gene", "%Id", "Id.Cls", "#Templ", "T.Cls", "#Activ", "A.Cls", "Fam.Cls", "Score"]
+
+
+def _rank_table_row(i: int, h) -> list:
+    n_templ = "?" if h.n_templates is None else str(h.n_templates)
+    n_act = "?" if h.n_activities is None else str(h.n_activities)
+    return [
+        str(i), h.accession, h.gene, f"{h.pct_identity:.1f}", str(h.identity_class),
+        n_templ, str(h.templates_class), n_act, str(h.activity_class), str(h.family_class), str(h.score),
+    ]
+
+
+def _print_rank_table(ranked: list) -> None:
+    rows = [_rank_table_row(i, h) for i, h in enumerate(ranked, start=1)]
+    widths = [max(len(_RANK_TABLE_HEADERS[i]), *(len(row[i]) for row in rows)) for i in range(len(_RANK_TABLE_HEADERS))]
+    fmt = "  ".join(f"{{:<{w}}}" for w in widths)
+    print(fmt.format(*_RANK_TABLE_HEADERS))
+    print(fmt.format(*["-" * w for w in widths]))
+    for row in rows:
+        print(fmt.format(*row))
+    print(
+        "\n(\"?\" = --fetch/--chembl-activity not yet run for that row, scored as 0/class 1; "
+        "Score = Id.Cls x T.Cls x A.Cls x Fam.Cls, each 1-5, see dd_idea.rank's module docstring)"
+    )
+
+
+def _write_rank_summary(ranked: list, out_dir: str, fmt: str) -> None:
+    rows = [_rank_table_row(i, h) for i, h in enumerate(ranked, start=1)]
+    if fmt == "csv":
+        dest = f"{out_dir}/hits_ranked.csv"
+        with open(dest, "w", newline="") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(_RANK_TABLE_HEADERS)
+            writer.writerows(rows)
+    else:
+        dest = f"{out_dir}/hits_ranked.md"
+        lines = ["| " + " | ".join(_RANK_TABLE_HEADERS) + " |", "|" + "---|" * len(_RANK_TABLE_HEADERS)]
+        lines += ["| " + " | ".join(row) + " |" for row in rows]
+        with open(dest, "w") as fh:
+            fh.write("\n".join(lines) + "\n")
+    print(f"\n-> {dest}")
+
+
 def main_search(argv=None) -> None:
     args = build_search_parser().parse_args(argv)
     show_progress = not args.no_progress
-    enrichment_mode = args.fetch_all or args.fetch or args.chembl_activity_all or args.chembl_activity
+    enrichment_mode = args.fetch_all or args.fetch or args.chembl_activity_all or args.chembl_activity or args.rank
 
     if enrichment_mode and args.query:
         print(f"[note] ignoring QUERY ({args.query!r}) -- enrichment flags operate on the existing hits.json in {args.out_dir}")
@@ -292,8 +343,17 @@ def main_search(argv=None) -> None:
         print(f"\n[done] ChEMBL activity counted -> {n_activities} activity record(s) total -> {args.out_dir}/hits.json")
         return
 
+    if args.rank:
+        ranked = rank_module.rank_hits(args.out_dir)
+        print()
+        _print_rank_table(ranked)
+        if args.summary_format in ("csv", "markdown"):
+            _write_rank_summary(ranked, args.out_dir, args.summary_format)
+        print(f"\n[done] {len(ranked)} hit(s) ranked")
+        return
+
     if not args.query:
-        raise SystemExit("dd_idea-search: QUERY is required unless --fetch/--fetch-all/--chembl-activity/--chembl-activity-all is given")
+        raise SystemExit("dd_idea-search: QUERY is required unless --fetch/--fetch-all/--chembl-activity/--chembl-activity-all/--rank is given")
     result = search_module.search(
         args.query, args.out_dir, evalue=args.evalue, any_organism=args.any_organism,
         max_hits=args.max_hits, show_progress=show_progress,
@@ -302,5 +362,6 @@ def main_search(argv=None) -> None:
     _print_and_write_summary(rows, args)
     print(
         f"\n[done] {len(rows)} protein(s) (seed + hits) -> {args.out_dir}/hits.json -- no downloads/lookups "
-        f"yet, review the table then run with --fetch/--fetch-all or --chembl-activity/--chembl-activity-all"
+        f"yet, review the table then run with --fetch/--fetch-all, --chembl-activity/--chembl-activity-all, "
+        f"or --rank to prioritize"
     )

@@ -23,27 +23,34 @@
   Homo sapiens限定Swiss-Protヒット100件(同一性順)、各行にUniProt
   family/gene/organismメタデータ付き——MAK(同一性35.1%、24位)も含む、
   `dd_idea`のPfam/InterProベース`--discover`では見えない蛋白。各行に
-  ChEMBL活性件数(`chembl_targets`、解決済みターゲットごとの
-  `n_activities`)も付与済み——CDK20自身はほぼ皆無(活性1件)、詳細は
-  下記「分かったこと」参照。構造テンプレート(AlphaFoldモデル+RCSB構造)
-  はアクセッションごとに選択的に取得する(一括ではない)——`hits.json`の
-  各行の`pdb_structures`フィールド参照(`null`=未取得。現時点では全行
-  未取得)。
+  ChEMBL活性件数(`chembl_targets`)と解像度2.0Å以下の全RCSB構造
+  (`pdb_structures`、`raw_pdb/{gene}/`配下——49gene・930構造、gitignore
+  対象・再生成可能でコミットはしていない)も付与済み。これらの組み合わせ
+  による優先順位付けは下記「分かったこと」参照。
 
 ## 分かったこと
 
 **100件のBLASTヒット間でChEMBLカバレッジに3000倍超の開きがある**
-(2026-07-24、`--chembl-activity-all`、pChEMBL値付きbinding assay):
-CDK20自身はChEMBL活性データが1件のみ——RCSB構造も0件であることと
-整合し、実験的にほぼ未研究のキナーゼであることが分かる。MAK
-(ファミリー分類ベースの`--discover`では見えないヒット)は13件。
-最もカバレッジが厚いヒットはGSK3B(7448件)、MAPK1/ERK2(6927件)、
-MAPK14/p38(6811件)、DYRK1A(6288件)、AURKA(3769件)、CDK2
-(3015件、ChEMBL自身の`CHEMBL301`ページと完全一致)。あるヒットが
-最大限有用であるためには、CDK20への配列同一性(構造テンプレートの
-根拠として)と、十分なSARデータ(`dd_chembl`での後続QSARモデリング用)の
-**両方**が必要——`hits.json`の`n_activities`フィールドが後者の
-ソート・フィルタ基準になる。
+(pChEMBL値付きbinding assay): CDK20自身はChEMBL活性データが1件のみ
+——RCSB構造も0件であることと整合し、実験的にほぼ未研究のキナーゼで
+あることが分かる。MAK(ファミリー分類ベースの`--discover`では見えない
+ヒット)は13件。最もカバレッジが厚いヒットはGSK3B(7448件)、
+MAPK1/ERK2(6927件)、MAPK14/p38(6811件)、DYRK1A(6288件)、
+AURKA(3769件)、CDK2(3015件、ChEMBL自身の`CHEMBL301`ページと完全
+一致)。
+
+**`--rank`(同一性×テンプレート×活性×family、各1〜5の分位数クラスの
+積——手法の詳細は[`../README.jp.md`](../README.jp.md#--rank-4つのシグナルを組み合わせる)
+参照)では、CDK2とCDK7が満点625で同率トップ**: どちらもCDK20自身と
+同じCDC2/CDKX subfamilyに属し、かつ他の全軸でも高スコア(CDK2:
+同一性43.8%、テンプレート275件、活性3015件。CDK7: 43.1%、18件、
+611件)。次点(スコア400): MAPK14、MAPK1、DYRK1A——ChEMBL/テンプレート
+件数は膨大だがCDK20とは別のCMGC subfamily。MAKは本プロジェクトの
+最初の実例に登場しfamilyも一致しているにもかかわらず、順位はかなり
+下位(68位、スコア40: 同一性クラス4×テンプレートクラス1[2.0Å以下0件]
+×活性クラス2[13件]×familyクラス5——ここで足を引っ張っているのは
+関連性ではなくデータの乏しさ)——構造的には関連するがデータ不足。
+完全なランキング: `pocket_detection/hits_ranked.md`。
 
 ## このディレクトリの再現方法
 
@@ -67,27 +74,24 @@ dd_idea-run Q8IZL9 P24941 P20794 -o CDK20_inhibition/cross_protein_comparison --
 # pocket_detection/ —— BLASTPベースの類似蛋白テーブル(ダウンロードなし)
 dd_idea-search Q8IZL9 -o CDK20_inhibition/pocket_detection
 
-# pocket_detection/ —— 全行についてChEMBLターゲット解決+活性件数カウント
-# (軽量——件数のみ、結果は上記「分かったこと」参照)
+# pocket_detection/ —— 全行についてChEMBLターゲット解決+活性件数カウント(軽量——件数のみ)
 dd_idea-search --chembl-activity-all -o CDK20_inhibition/pocket_detection
-```
 
-**未実行** —— 実際の構造テンプレート取得:
+# pocket_detection/ —— 全行についてAlphaFoldモデル(シード)+解像度2.0Å以下の
+# 全RCSB構造を取得(ツールのデフォルト)——930構造、420MB、数分かかる。
+# gitignore対象でコミットはしていない(../README.mdの--fetch-allのコスト
+# に関する注記参照)
+dd_idea-search --fetch-all -o CDK20_inhibition/pocket_detection
 
-```bash
-# pocket_detection/ —— 上記の表を確認した後、特定アクセッションのAlphaFold
-# モデル+RCSBテンプレート(2.0Å以下、ツールのデフォルト)を取得。例:
-dd_idea-search --fetch P24941 -o CDK20_inhibition/pocket_detection
+# pocket_detection/ —— 上記4シグナルで全ヒットをランキング(即時・ネット
+# ワークアクセスなし)——結果は上記「分かったこと」とhits_ranked.md参照
+dd_idea-search --rank -o CDK20_inhibition/pocket_detection --summary-format markdown
 ```
 
 ## 今後の予定(未着手)
 
-`pocket_detection/hits.json`の`pct_identity`と`n_activities`の両方を
-使って、実際に構造テンプレート取得の価値があるアクセッションを選定する
-(候補: CDK2 43.8%/活性3015件、CDK1 43.1%/1488件、AURKA
-28.4%/3769件——両軸で高い。MAK 35.1%/13件——クロスプロテイン比較上は
-構造的に関連するがChEMBLデータは乏しい)。上記の`--fetch`コマンドを
-該当分に実行し、続いて`dd_afpocket`のポケット検出/局所拘束MD
-アンサンブル生成、ドッキング(`dd_docking`)、QSAR(`dd_chembl`)——実行
-した際の出力もここに置く(例: `docking/`、`qsar/`)、各ツール自身の
-レポジトリには置かない。
+`pocket_detection/hits_ranked.md`の上位ヒット(CDK2、CDK7、続いて
+MAPK14/MAPK1/DYRK1A)を構造テンプレート/SARデータの優先リストとして、
+`dd_afpocket`のポケット検出/局所拘束MDアンサンブル生成、ドッキング
+(`dd_docking`)、QSAR(`dd_chembl`)に進む——実行した際の出力もここに
+置く(例: `docking/`、`qsar/`)、各ツール自身のレポジトリには置かない。
