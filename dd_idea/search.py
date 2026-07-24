@@ -189,6 +189,15 @@ def _resolve_targets(result: dict, accessions: Union[List[str], str]) -> "dict[s
     return {a.upper(): rows_by_acc[a.upper()] for a in accessions}
 
 
+def _gene_subdir(acc: str, row: dict) -> str:
+    """The `raw_pdb/` subdirectory a row's structures download into --
+    its gene symbol (e.g. `CDK2`), falling back to the accession itself
+    when no gene name is on record (e.g. a raw-sequence seed with no
+    UniProt entry at all)."""
+    gene = row.get("gene")
+    return gene if gene and gene != "-" else acc
+
+
 def fetch_templates(
     out_dir: Union[str, Path], accessions: Union[List[str], str], *,
     resolution_cutoff: float = 2.0, show_progress: bool = True,
@@ -197,7 +206,10 @@ def fetch_templates(
     or better than `resolution_cutoff` for the given `accessions` (or the
     literal string `"all"` for every row) out of an existing
     `{out_dir}/hits.json` (written by a prior `search()` call). Updates
-    those rows in place and rewrites `hits.json`."""
+    those rows in place and rewrites `hits.json`. Each accession's RCSB
+    structures land under their own `raw_pdb/{gene}/` subdirectory (see
+    `_gene_subdir`), not flat in `raw_pdb/` -- a multi-accession fetch can
+    mean hundreds of files from unrelated proteins otherwise."""
     out_dir = Path(out_dir)
     result = _load_hits_json(out_dir)
     targets = _resolve_targets(result, accessions)
@@ -216,7 +228,7 @@ def fetch_templates(
                 if show_progress:
                     print(f"[fetch] {acc}: AlphaFold DB model unavailable ({e})", flush=True)
         row["pdb_structures"] = rcsb.list_all_structures_at_resolution(
-            acc, out_dir, resolution_cutoff=resolution_cutoff, show_progress=show_progress,
+            acc, out_dir, resolution_cutoff=resolution_cutoff, subdir=_gene_subdir(acc, row), show_progress=show_progress,
         )
 
     (out_dir / "hits.json").write_text(json.dumps(result, indent=2))

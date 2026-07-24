@@ -85,7 +85,8 @@ def download_pdb(pdb_id: str, dest: Path) -> str:
 
 
 def list_all_structures_at_resolution(
-    accession: str, out_dir: Union[str, Path], *, resolution_cutoff: float = 2.0, show_progress: bool = True,
+    accession: str, out_dir: Union[str, Path], *,
+    resolution_cutoff: float = 2.0, subdir: Optional[str] = None, show_progress: bool = True,
 ) -> List[dict]:
     """Every RCSB structure of `accession` at or better than
     `resolution_cutoff` -- no cap, no ligand preference, no dedup by
@@ -97,9 +98,15 @@ def list_all_structures_at_resolution(
     `resolution`/`method`/`title`/`pdb_path`), not `SelectedPdbStructure`
     -- no canonical-sequence chain alignment is done here, since bulk
     template gathering doesn't need per-residue numbering the way the
-    reference-pocket overlay does."""
+    reference-pocket overlay does.
+
+    Downloads go to `{out_dir}/raw_pdb/{pdb_id}.pdb`, or
+    `{out_dir}/raw_pdb/{subdir}/{pdb_id}.pdb` if `subdir` is given (e.g. a
+    gene name -- `search.fetch_templates` passes one per accession so a
+    multi-hit fetch doesn't dump hundreds of PDB files from unrelated
+    proteins into one flat directory)."""
     out_dir = Path(out_dir)
-    raw_pdb_dir = out_dir / "raw_pdb"
+    raw_pdb_dir = out_dir / "raw_pdb" / subdir if subdir else out_dir / "raw_pdb"
     raw_pdb_dir.mkdir(parents=True, exist_ok=True)
 
     try:

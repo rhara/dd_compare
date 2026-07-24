@@ -159,6 +159,15 @@ CDK20 itself: 1) worth knowing about before deciding which hits are
 useful pocket-detection templates *and* have enough SAR data for follow-up
 QSAR work.
 
+`--fetch`ed RCSB structures land under `raw_pdb/{gene}/` (e.g.
+`raw_pdb/CDK2/6Q4G.pdb`), not flat in `raw_pdb/` -- a multi-accession
+`--fetch-all` can mean thousands of files from dozens of unrelated
+proteins otherwise. Falls back to the accession itself when a row has no
+gene name on record (e.g. a raw-sequence seed with no UniProt entry). A
+PDB entry cross-referenced to more than one accession's UniProt record
+(e.g. a multi-chain structure) gets its own copy in each owning gene's
+subdirectory, so every gene folder stays self-contained.
+
 ## Installation
 
 Requires Biopython, pandas, numpy, PyMOL (`pymol2`, importable as a library
